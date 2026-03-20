@@ -88,16 +88,19 @@
 
         try {
             const r = await fetch(URL, {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-        accion: "reporteSanitario",
-        email: email
-    })
-});
-            // Llenar Vacunas
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    accion: "reporteSanitario",
+                    email: email
+                })
+            });
+
+            const d = await r.json();
+            if (!d.ok) throw new Error(d.error || "Error desconocido");
+
             const tbodyV = document.querySelector("#tabla-vacunas tbody");
             tbodyV.innerHTML = d.dashboard.map(v => `
                 <tr>
@@ -108,17 +111,15 @@
                     <td><span class="badge ${v.porcentaje < 80 ? 'bg-r' : 'bg-g'}">${v.porcentaje < 80 ? 'RIESGO' : 'OK'}</span></td>
                 </tr>`).join('');
 
-            // Llenar Pruebas
             const tbodyP = document.querySelector("#tabla-pruebas tbody");
             tbodyP.innerHTML = d.auditoria.map(p => `
                 <tr>
                     <td>${p.prueba}</td>
                     <td>${p.realizadas}</td>
                     <td>${p.total}</td>
-                    <td>${p.estatus} ${p.color || ''}</td>
+                    <td>${p.estatus}</td>
                 </tr>`).join('');
 
-            // Llenar Faltantes (Ajustado a la consola)
             const f = d.faltantes;
             const tag = (l) => l && l.length ? l.map(i => `<span class="id-tag">${i}</span>`).join('') : '<em>Ninguno</em>';
             
@@ -130,8 +131,9 @@
             `;
 
             document.getElementById("report-section").style.display = "block";
+
         } catch (e) {
-            alert("Error al cargar datos");
+            alert("Error al cargar datos: " + e.message);
             localStorage.clear();
             location.reload();
         } finally {
@@ -141,5 +143,6 @@
 
     if (localStorage.getItem("pysiga_session_email")) iniciar();
 </script>
+
 </body>
 </html>
