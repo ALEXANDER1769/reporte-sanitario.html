@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PYSIGA | Sanidad</title>
+    <title>PYSIGA | Tablero de Control Sanitario</title>
     <style>
-        :root { --p: #1b4332; --s: #2d6a4f; --r: #d90429; --a: #ffb703; --l: #f8f9fa; }
+        :root { 
+            --p: #1b4332; 
+            --s: #2d6a4f; 
+            --r: #d90429; 
+            --a: #ffb703; 
+            --l: #f8f9fa; 
+        }
         body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; margin: 0; padding: 0; color: #1a1a1a; }
         header { background: var(--p); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
@@ -18,20 +24,24 @@
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
         .bg-r { background: #fee2e2; color: #991b1b; }
         .bg-g { background: #d1fae5; color: #065f46; }
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; }
-        .loader { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--s); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Loader con la Vaca */
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; }
+        .vaca-loader { font-size: 50px; animation: salto 1s infinite alternate; margin-bottom: 15px; }
+        @keyframes salto { from { transform: translateY(0); } to { transform: translateY(-20px); } }
+        
         .id-tag { background: #4a5568; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin: 2px; display: inline-block; }
-        #login-section { text-align: center; padding: 3rem 1rem; }
-        input { padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 20px; background: var(--s); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #login-section { text-align: center; padding: 3rem 1rem; display: none; }
+        input { padding: 12px; width: 280px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+        button { padding: 12px 24px; background: var(--s); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { opacity: 0.8; transform: scale(1.02); }
     </style>
 </head>
 <body>
 
 <div id="overlay">
-    <div class="loader"></div>
-    <p>Cargando datos sanitarios...</p>
+    <div class="vaca-loader">🐄</div>
+    <p style="font-weight: bold; color: var(--p)">Analizando estatus sanitario...</p>
 </div>
 
 <header>
@@ -41,10 +51,11 @@
 
 <div class="container">
     <div id="login-section">
-        <div style="background:white; padding:2rem; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1)">
-            <h3>Ingrese su correo</h3>
+        <div style="background:white; padding:2rem; border-radius:12px; box-shadow:0 5px 15px rgba(0,0,0,0.1)">
+            <h3 style="color: var(--p)">Usuario no detectado</h3>
+            <p>Por favor, ingrese su correo para generar el reporte:</p>
             <input type="email" id="email-field" placeholder="correo@ejemplo.com">
-            <button onclick="iniciar()">Ver Reporte</button>
+            <button onclick="iniciar()">Consultar Reporte</button>
         </div>
     </div>
 
@@ -81,51 +92,60 @@
         </div>
 
         <div class="card card-danger">
-            <h2>🚨 Pendientes por ID (Manga)</h2>
-            <div id="box-faltantes" style="font-size: 0.9rem;"></div>
+            <h2>🚨 Pendientes por ID (Animales en Riesgo)</h2>
+            <div id="box-faltantes" style="font-size: 0.9rem; line-height: 1.6;"></div>
         </div>
 
-        <div style="text-align:center; margin-bottom:2rem;">
-            <button onclick="window.print()" style="background:#444">Imprimir</button>
-            <button onclick="localStorage.clear(); location.reload();" style="background:none; color:#666; border:1px solid #ccc">Cambiar Usuario</button>
+        <div style="text-align:center; margin-bottom:4rem; display: flex; gap: 10px; justify-content: center;">
+            <button onclick="window.print()" style="background:#444">🖨️ Imprimir Reporte</button>
+            <button onclick="localStorage.clear(); location.reload();" style="background:none; color:#666; border:1px solid #ccc">🔄 Cambiar Usuario</button>
         </div>
     </div>
 </div>
 
 <script>
-const URL = "https://pysiga.d-alexjose.workers.dev";
+const WORKER_URL = "https://pysiga.d-alexjose.workers.dev";
 
 async function iniciar() {
-    const email =
-        document.getElementById("email-field").value ||
-        localStorage.getItem("pysiga_session_email");
+    // 1. Prioridad de obtención de Email: URL > Input > LocalStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailFromUrl = urlParams.get('email');
+    const emailFromInput = document.getElementById("email-field").value;
+    const emailFromStorage = localStorage.getItem("pysiga_session_email");
 
-    if (!email) return;
+    const email = emailFromUrl || emailFromInput || emailFromStorage;
 
+    if (!email) {
+        document.getElementById("login-section").style.display = "block";
+        document.getElementById("overlay").style.display = "none";
+        return;
+    }
+
+    // Guardamos para futuras recargas
     localStorage.setItem("pysiga_session_email", email);
+    
+    // Ajuste de interfaz
     document.getElementById("login-section").style.display = "none";
     document.getElementById("overlay").style.display = "flex";
-    document.getElementById("display-email").textContent = email;
+    document.getElementById("display-email").textContent = "Reporte para: " + email;
 
     try {
-        const r = await fetch(URL, {
+        const respuesta = await fetch(WORKER_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 accion: "reporteSanitario",
                 email: email
             })
         });
 
-        const d = await r.json();
+        const datos = await respuesta.json();
 
-        if (!d.ok) throw new Error(d.error || "Error backend");
+        if (!datos.ok) throw new Error(datos.error || "Error en el servidor");
 
-        // Vacunas
+        // --- LLENAR TABLA VACUNAS ---
         const tbodyV = document.querySelector("#tabla-vacunas tbody");
-        tbodyV.innerHTML = d.dashboard.map(v => `
+        tbodyV.innerHTML = datos.dashboard.map(v => `
             <tr>
                 <td><b>${v.vacuna}</b></td>
                 <td>${v.aplicados}</td>
@@ -133,51 +153,69 @@ async function iniciar() {
                 <td>${v.porcentaje}%</td>
                 <td>
                     <span class="badge ${v.porcentaje < 80 ? 'bg-r' : 'bg-g'}">
-                        ${v.porcentaje < 80 ? 'RIESGO' : 'OK'}
+                        ${v.porcentaje < 80 ? 'RIESGO' : 'AL DÍA'}
                     </span>
                 </td>
             </tr>
         `).join("");
 
-        // Pruebas
+        // --- LLENAR TABLA PRUEBAS ---
         const tbodyP = document.querySelector("#tabla-pruebas tbody");
-        tbodyP.innerHTML = d.auditoria.map(p => `
+        tbodyP.innerHTML = datos.auditoria.map(p => `
             <tr>
                 <td>${p.prueba}</td>
                 <td>${p.realizadas}</td>
                 <td>${p.total}</td>
-                <td>${p.estatus}</td>
+                <td><b>${p.estatus}</b></td>
             </tr>
         `).join("");
 
-        // Faltantes
-        const f = d.faltantes || {};
-        const tag = (l) =>
-            l && l.length
-                ? l.map(i => `<span class="id-tag">${i}</span>`).join("")
-                : "<em>Ninguno</em>";
+        // --- LLENAR FALTANTES (SISTEMA DE MANGA) ---
+        const f = datos.faltantes || {};
+        const crearTags = (lista) => 
+            lista && lista.length 
+                ? lista.map(id => `<span class="id-tag">${id}</span>`).join("") 
+                : "<em>Sin pendientes registrados</em>";
 
         document.getElementById("box-faltantes").innerHTML = `
-            <p><b>Ciclo (Aftosa/Rabia):</b><br>${tag(f.urgenciaLegal)}</p>
-            <p><b>Brucelosis:</b><br>${tag(f.brucelosis)}</p>
-            <p><b>Reproductivo:</b><br>${tag(f.reproductivo)}</p>
-            <p><b>Muestreo Sangre:</b><br>${tag(f.sangre)}</p>
+            <div style="margin-bottom: 15px;">
+                <p><strong>⚠️ Ciclo Obligatorio (Aftosa/Rabia):</strong></p>
+                ${crearTags(f.urgenciaLegal)}
+            </div>
+            <div style="margin-bottom: 15px;">
+                <p><strong>💉 Brucelosis / Tuberculosis:</strong></p>
+                ${crearTags(f.brucelosis)}
+            </div>
+            <div style="margin-bottom: 15px;">
+                <p><strong>🧬 Chequeo Reproductivo:</strong></p>
+                ${crearTags(f.reproductivo)}
+            </div>
+            <div>
+                <p><strong>🩸 Pendientes Muestreo de Sangre:</strong></p>
+                ${crearTags(f.sangre)}
+            </div>
         `;
 
         document.getElementById("report-section").style.display = "block";
 
-    } catch (e) {
-        alert("Error al cargar datos: " + e.message);
-        localStorage.clear();
-        location.reload();
+    } catch (error) {
+        console.error("Error PYSIGA:", error);
+        alert("Atención: No se pudieron cargar los datos sanitarios. Verifique su conexión.");
+        document.getElementById("login-section").style.display = "block";
     } finally {
         document.getElementById("overlay").style.display = "none";
     }
 }
 
-if (localStorage.getItem("pysiga_session_email")) {
-    iniciar();
-}
+// AUTO-EJECUCIÓN AL CARGAR
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('email') || localStorage.getItem("pysiga_session_email")) {
+        iniciar();
+    } else {
+        document.getElementById("login-section").style.display = "block";
+    }
+});
 </script>
 
 </body>
