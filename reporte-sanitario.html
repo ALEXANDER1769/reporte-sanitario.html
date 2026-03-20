@@ -3,218 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PYSIGA | Reporte Sanitario Dinámico</title>
+    <title>PYSIGA | Sanidad</title>
     <style>
-        :root {
-            --primary: #1b4332; --secondary: #2d6a4f; --accent: #95d5b2;
-            --danger: #d90429; --warning: #ffb703; --light: #f8f9fa; --dark: #081c15;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; color: var(--dark); margin: 0; padding: 0; }
-        header { background: var(--primary); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-        
-        /* Sección de Login/Identificación */
-        #login-section { text-align: center; margin-top: 4rem; }
-        .login-card { background: white; padding: 2.5rem; border-radius: 15px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--secondary); }
-        input[type="email"] { padding: 12px; width: 280px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; transition: 0.3s; }
-        input[type="email"]:focus { border-color: var(--secondary); }
-        .btn-main { padding: 12px 25px; background: var(--secondary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        .btn-main:hover { background: var(--primary); transform: translateY(-2px); }
-
-        /* Tarjetas de Reporte */
-        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; border-left: 6px solid var(--secondary); }
-        .card-danger { border-left-color: var(--danger); }
-        h2 { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 10px; }
-
-        /* Tablas */
-        .table-res { overflow-x: auto; }
+        :root { --p: #1b4332; --s: #2d6a4f; --r: #d90429; --a: #ffb703; --l: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: #e9ecef; margin: 0; padding: 0; color: #1a1a1a; }
+        header { background: var(--p); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; border-left: 6px solid var(--s); }
+        .card-danger { border-left-color: var(--r); }
+        h2 { color: var(--p); margin-top: 0; font-size: 1.3rem; }
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { background: #f1f3f5; color: var(--primary); padding: 12px; text-align: left; font-size: 0.9rem; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .bg-red { background: #fee2e2; color: #991b1b; }
-        .bg-yellow { background: #fef3c7; color: #92400e; }
-        .bg-green { background: #d1fae5; color: #065f46; }
-
-        /* Loader Overlay */
+        th { background: #f1f3f5; color: var(--p); padding: 10px; text-align: left; font-size: 0.85rem; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .bg-r { background: #fee2e2; color: #991b1b; }
+        .bg-g { background: #d1fae5; color: #065f46; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; }
-        .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: var(--secondary); border-radius: 50%; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .btn-logout { background: none; border: 1px solid #ccc; color: #888; padding: 5px 12px; border-radius: 5px; cursor: pointer; margin-top: 20px; font-size: 0.8rem; }
-        .faltantes-box { background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 1rem; }
-        .id-tag { background: #4a5568; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin: 2px; display: inline-block; }
-
-        @media print { .no-print { display: none; } .card { box-shadow: none; border: 1px solid #eee; } }
+        .loader { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--s); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .id-tag { background: #4a5568; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin: 2px; display: inline-block; }
+        #login-section { text-align: center; padding: 3rem 1rem; }
+        input { padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; background: var(--s); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="overlay">
-        <div class="loader"></div>
-        <p style="margin-top: 1rem; font-weight: bold; color: var(--primary);">Analizando estatus sanitario...</p>
+<div id="overlay"><div class="loader"></div><p>Cargando datos sanitarios...</p></div>
+
+<header>
+    <h1 style="margin:0">🛡️ CONTROL SANITARIO</h1>
+    <p id="display-email" style="margin:5px 0 0; font-size:0.8rem; opacity:0.8"></p>
+</header>
+
+<div class="container">
+    <div id="login-section">
+        <div style="background:white; padding:2rem; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1)">
+            <h3>Ingrese su correo</h3>
+            <input type="email" id="email-field" placeholder="correo@ejemplo.com">
+            <button onclick="iniciar()">Ver Reporte</button>
+        </div>
     </div>
 
-    <header>
-        <h1>PYSIGA SANIDAD</h1>
-        <p id="display-email" style="font-size: 0.85rem; opacity: 0.8;"></p>
-    </header>
-
-    <div class="container">
-        <div id="login-section">
-            <div class="login-card">
-                <h3>Reporte Sanitario</h3>
-                <p style="color: #666; font-size: 0.9rem;">Ingrese el correo de la cuenta para consultar</p>
-                <input type="email" id="email-field" placeholder="ejemplo@correo.com">
-                <button class="btn-main" onclick="guardarYConsultar()">Consultar</button>
-            </div>
+    <div id="report-section" style="display: none;">
+        <div class="card">
+            <h2>📊 Cobertura de Vacunación</h2>
+            <table id="tabla-vacunas">
+                <thead><tr><th>Vacuna</th><th>Aplicados</th><th>Total</th><th>%</th><th>Estatus</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
 
-        <div id="report-section" style="display: none;">
+        <div class="card">
+            <h2>🔍 Auditoría de Pruebas</h2>
+            <table id="tabla-pruebas">
+                <thead><tr><th>Prueba</th><th>Realizadas</th><th>Total</th><th>Vigencia</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="card card-danger">
+            <h2>🚨 Pendientes por ID (Manga)</h2>
+            <div id="box-faltantes" style="font-size: 0.9rem;"></div>
+        </div>
+        
+        <div style="text-align:center; margin-bottom:2rem;">
+            <button onclick="window.print()" style="background:#444">Imprimir</button>
+            <button onclick="localStorage.clear(); location.reload();" style="background:none; color:#666; border:1px solid #ccc">Cambiar Usuario</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const URL = "https://pysiga.d-alexjose.workers.dev";
+
+    async function iniciar() {
+        const email = document.getElementById("email-field").value || localStorage.getItem("pysiga_session_email");
+        if (!email) return;
+        
+        localStorage.setItem("pysiga_session_email", email);
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("overlay").style.display = "flex";
+        document.getElementById("display-email").textContent = email;
+
+        try {
+            const r = await fetch(URL, {
+                method: "POST",
+                body: JSON.stringify({ accion: "reporteSanitario", email: email })
+            });
+            const d = await r.json();
             
-            <div class="card">
-                <h2>📊 Cobertura de Vacunación</h2>
-                <div class="table-res">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Vacuna / Biológico</th>
-                                <th>Aplicados</th>
-                                <th>Total Hato</th>
-                                <th>Cobertura</th>
-                                <th>Estatus</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-vacunas"></tbody>
-                    </table>
-                </div>
-            </div>
+            if (!d.ok) throw new Error();
 
-            <div class="card">
-                <h2>🔍 Auditoría de Pruebas</h2>
-                <div class="table-res">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Prueba Diagnóstica</th>
-                                <th>Realizadas</th>
-                                <th>Población</th>
-                                <th>Vigencia</th>
-                                <th>Resultado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-pruebas"></tbody>
-                    </table>
-                </div>
-            </div>
+            // Llenar Vacunas
+            const tbodyV = document.querySelector("#tabla-vacunas tbody");
+            tbodyV.innerHTML = d.dashboard.map(v => `
+                <tr>
+                    <td><b>${v.vacuna}</b></td>
+                    <td>${v.aplicados}</td>
+                    <td>${v.total}</td>
+                    <td>${v.porcentaje}%</td>
+                    <td><span class="badge ${v.porcentaje < 80 ? 'bg-r' : 'bg-g'}">${v.porcentaje < 80 ? 'RIESGO' : 'OK'}</span></td>
+                </tr>`).join('');
 
-            <div class="card card-danger">
-                <h2>🚨 Animales Pendientes (Manga)</h2>
-                <p style="font-size: 0.9rem; color: #555;">IDs que requieren atención inmediata según el protocolo:</p>
-                <div id="box-faltantes" class="faltantes-box"></div>
-            </div>
+            // Llenar Pruebas
+            const tbodyP = document.querySelector("#tabla-pruebas tbody");
+            tbodyP.innerHTML = d.auditoria.map(p => `
+                <tr>
+                    <td>${p.prueba}</td>
+                    <td>${p.realizadas}</td>
+                    <td>${p.total}</td>
+                    <td>${p.estatus} ${p.color || ''}</td>
+                </tr>`).join('');
 
-            <div class="no-print" style="text-align: center; margin-bottom: 3rem;">
-                <button class="btn-main" onclick="window.print()">🖨️ Imprimir Reporte</button><br>
-                <button class="btn-logout" onclick="limpiarSesion()">Cerrar Sesión / Cambiar Correo</button>
-            </div>
-        </div>
-    </div>
+            // Llenar Faltantes (Ajustado a la consola)
+            const f = d.faltantes;
+            const tag = (l) => l && l.length ? l.map(i => `<span class="id-tag">${i}</span>`).join('') : '<em>Ninguno</em>';
+            
+            document.getElementById("box-faltantes").innerHTML = `
+                <p><b>Ciclo (Aftosa/Rabia):</b><br>${tag(f.urgenciaLegal)}</p>
+                <p><b>Brucelosis:</b><br>${tag(f.brucelosis)}</p>
+                <p><b>Reproductivo:</b><br>${tag(f.reproductivo)}</p>
+                <p><b>Muestreo Sangre:</b><br>${tag(f.sangre)}</p>
+            `;
 
-    <script>
-        const WORKER_URL = "https://pysiga.d-alexjose.workers.dev";
-
-        // Al cargar la página, verifica si ya hay un correo
-        document.addEventListener("DOMContentLoaded", () => {
-            const correoGuardado = localStorage.getItem("pysiga_session_email");
-            if (correoGuardado) {
-                ejecutarConsulta(correoGuardado);
-            }
-        });
-
-        function guardarYConsultar() {
-            const email = document.getElementById("email-field").value.trim();
-            if (email && email.includes("@")) {
-                localStorage.setItem("pysiga_session_email", email);
-                ejecutarConsulta(email);
-            } else {
-                alert("Por favor, ingrese un correo válido.");
-            }
-        }
-
-        function limpiarSesion() {
-            localStorage.removeItem("pysiga_session_email");
+            document.getElementById("report-section").style.display = "block";
+        } catch (e) {
+            alert("Error al cargar datos");
+            localStorage.clear();
             location.reload();
+        } finally {
+            document.getElementById("overlay").style.display = "none";
         }
+    }
 
-        async function ejecutarConsulta(email) {
-            document.getElementById("login-section").style.display = "none";
-            document.getElementById("overlay").style.display = "flex";
-            document.getElementById("display-email").textContent = "Expediente: " + email;
-
-            try {
-                const response = await fetch(WORKER_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ accion: "reporteSanitario", email: email })
-                });
-
-                const data = await response.json();
-                if (!data.ok) throw new Error(data.error || "No se encontraron datos");
-
-                // --- TABLA VACUNAS ---
-                const tVacunas = document.getElementById("tbody-vacunas");
-                tVacunas.innerHTML = "";
-                data.dashboard.forEach(v => {
-                    const badgeColor = v.porcentaje < 50 ? 'bg-red' : (v.porcentaje < 80 ? 'bg-yellow' : 'bg-green');
-                    tVacunas.innerHTML += `
-                        <tr>
-                            <td><strong>${v.vacuna}</strong></td>
-                            <td>${v.aplicados}</td>
-                            <td>${v.total}</td>
-                            <td>${v.porcentaje}%</td>
-                            <td><span class="status-badge ${badgeColor}">${v.porcentaje < 80 ? 'INCOMPLETO' : 'PROTEGIDO'}</span></td>
-                        </tr>`;
-                });
-
-                // --- TABLA PRUEBAS ---
-                const tPruebas = document.getElementById("tbody-pruebas");
-                tPruebas.innerHTML = "";
-                data.auditoria.forEach(p => {
-                    tPruebas.innerHTML += `
-                        <tr>
-                            <td>${p.prueba}</td>
-                            <td>${p.realizadas}</td>
-                            <td>${p.total}</td>
-                            <td>${p.estatus}</td>
-                            <td>${p.color || '⚪'}</td>
-                        </tr>`;
-                });
-
-                // --- BOX FALTANTES ---
-                const boxFaltantes = document.getElementById("box-faltantes");
-                const f = data.faltantes;
-                
-                const crearTags = (lista) => lista.length ? lista.map(id => `<span class="id-tag">${id}</span>`).join('') : '<em>Ninguno</em>';
-
-                boxFaltantes.innerHTML = `
-                    <p><strong>Urgencia Ciclo (Aftosa/Rabia):</strong><br> ${crearTags(f.urgenciaLegal)}</p>
-                    <hr style="border:0; border-top:1px solid #feb2b2; margin: 10px 0;">
-                    <p><strong>Pendientes Brucelosis:</strong><br> ${crearTags(f.brucelosis)}</p>
-                    <hr style="border:0; border-top:1px solid #feb2b2; margin: 10px 0;">
-                    <p><strong>Pendientes Muestreo Sangre:</strong><br> ${crearTags(f.sangre)}</p>
-                `;
-
-                document.getElementById("report-section").style.display = "block";
-
-            } catch (err) {
-                alert("Error: " + err.message);
-                limpiarSesion();
-            } finally {
-                document.getElementById("overlay").style.display = "none";
-            }
-        }
-    </script>
+    if (localStorage.getItem("pysiga_session_email")) iniciar();
+</script>
 </body>
 </html>
