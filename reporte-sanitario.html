@@ -18,12 +18,19 @@
         .red { background: #fee2e2; color: #b91c1c; }
         .green { background: #d1fae5; color: #065f46; }
         .tag { background: #4a5568; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin: 2px; display: inline-block; }
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); justify-content: center; align-items: center; z-index: 100; }
+        
+        /* Loader mejorado */
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        .vaca-loader { font-size: 50px; animation: salto 0.8s infinite alternate; margin-bottom: 15px; }
+        @keyframes salto { from { transform: translateY(0); } to { transform: translateY(-15px); } }
     </style>
 </head>
 <body>
 
-<div id="overlay"><b>Cargando datos...</b></div>
+<div id="overlay">
+    <div class="vaca-loader">🐄</div>
+    <b style="color: #1b4332; font-size: 1.2rem;">Procesando Control Sanitario...</b>
+</div>
 
 <header>
     <h2 style="margin:0">🛡️ CONTROL SANITARIO</h2>
@@ -31,30 +38,33 @@
 </header>
 
 <div class="container">
-    <div id="login" style="text-align:center; padding: 2rem;">
+    <div id="login" style="text-align:center; padding: 2rem; display:none;">
+        <p>No se detectó un usuario activo.</p>
         <input type="email" id="email" placeholder="Tu correo aquí" style="padding:10px; width:200px">
         <button onclick="ejecutar()" style="padding:10px; background:var(--s); color:white; border:none; cursor:pointer">Consultar</button>
     </div>
 
     <div id="reporte" style="display:none">
         <div class="card">
-            <h3>📊 Vacunación</h3>
+            <h3>📊 Vacunación (Dashboard de Blindaje)</h3>
             <table id="t-vacunas"><thead><tr><th>Vacuna</th><th>Cant.</th><th>%</th></tr></thead><tbody></tbody></table>
         </div>
 
         <div class="card">
-            <h3>🔍 Auditoría</h3>
+            <h3>🔍 Auditoría de Pruebas Diagnósticas</h3>
             <table id="t-pruebas"><thead><tr><th>Prueba</th><th>Estatus</th></tr></thead><tbody></tbody></table>
         </div>
 
         <div class="card card-r">
-            <h3>🚨 Animales Pendientes</h3>
+            <h3>🚨 Animales Pendientes (IDs)</h3>
             <div id="f-legal"></div>
             <div id="f-brucelosis"></div>
             <div id="f-reproductivo"></div>
         </div>
         
-        <button onclick="localStorage.clear(); location.reload()" style="background:none; border:none; color:grey; cursor:pointer">✕ Cerrar Sesión</button>
+        <div style="text-align: center; margin-top: 20px;">
+             <button onclick="window.print()" style="padding: 10px 20px; background:#4a5568; color:white; border:none; border-radius: 5px; cursor:pointer;">🖨️ Imprimir Reporte</button>
+        </div>
     </div>
 </div>
 
@@ -62,9 +72,19 @@
     const WORKER = "https://pysiga.d-alexjose.workers.dev";
 
     async function ejecutar() {
-        const mail = document.getElementById("email").value || localStorage.getItem("email");
-        if (!mail) return;
+        // 🔥 LA MAGIA OCURRE AQUÍ: Leer el correo de la URL enviada por Google Sites
+        const urlParams = new URLSearchParams(window.location.search);
+        const correoDeLaURL = urlParams.get('email');
+        
+        // El orden de prioridad: 1. URL, 2. Input manual, 3. Memoria local
+        const mail = correoDeLaURL || document.getElementById("email").value || localStorage.getItem("email");
+        
+        if (!mail) {
+            document.getElementById("login").style.display = "block";
+            return;
+        }
 
+        // Guardamos el correo y mostramos el loader
         localStorage.setItem("email", mail);
         document.getElementById("login").style.display = "none";
         document.getElementById("overlay").style.display = "flex";
@@ -76,7 +96,7 @@
                 body: JSON.stringify({ accion: "reporteSanitario", email: mail })
             });
             const data = await res.json();
-            if (!data.ok) throw "Error";
+            if (!data.ok) throw new Error("Datos no encontrados");
 
             // 1. Vacunas
             document.querySelector("#t-vacunas tbody").innerHTML = data.dashboard.map(v => `
@@ -92,7 +112,7 @@
             // 3. Faltantes (IDs)
             const fmt = (lista, titulo) => {
                 if(!lista || lista.length === 0) return "";
-                return `<p><b>${titulo}:</b><br>${lista.map(id => `<span class="tag">${id}</span>`).join('')}</p>`;
+                return `<p style="margin:5px 0"><b>${titulo}:</b><br>${lista.map(id => `<span class="tag">${id}</span>`).join('')}</p>`;
             };
 
             document.getElementById("f-legal").innerHTML = fmt(data.faltantes.urgenciaLegal, "Urgencia Aftosa/Rabia");
@@ -101,15 +121,16 @@
 
             document.getElementById("reporte").style.display = "block";
         } catch (e) {
-            alert("No se pudieron cargar los datos.");
-            localStorage.clear();
-            location.reload();
+            console.error("Error al cargar:", e);
+            document.getElementById("login").style.display = "block";
+            alert("Hubo un error al procesar el reporte sanitario. Verifica tu Excel.");
         } finally {
-            document.getElementById("overlay").style.display = "none";
+            document.getElementById("overlay").style.display = "none"; // Ocultar loader al terminar
         }
     }
 
-    if(localStorage.getItem("email")) ejecutar();
+    // Arrancar automáticamente al cargar la página
+    ejecutar();
 </script>
 </body>
 </html>
