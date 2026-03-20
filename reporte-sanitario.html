@@ -3,290 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Blindaje Sanitario | PYSIGA</title>
+    <title>PYSIGA | Reporte Sanitario Dinámico</title>
     <style>
         :root {
-            --verde: #2f6f4e; 
-            --rojo: #e74c3c; 
-            --amarillo: #f1c40f; 
-            --fondo: #f4f6f9; 
-            --blanco: #fff; 
-            --texto: #333;
+            --primary: #1b4332; --secondary: #2d6a4f; --accent: #95d5b2;
+            --danger: #d90429; --warning: #ffb703; --light: #f8f9fa; --dark: #081c15;
         }
-        body { 
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: var(--fondo); 
-            color: var(--texto); 
-            margin: 0; 
-            padding: 20px; 
-        }
-        .container { 
-            max-width: 1200px; 
-            margin: auto; 
-        }
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 2px solid var(--verde); 
-            padding-bottom: 10px; 
-            margin-bottom: 20px; 
-        }
-        h1, h2, h3 { 
-            color: var(--verde); 
-            margin-top: 0; 
-        }
-        .card { 
-            background: var(--blanco); 
-            border-radius: 8px; 
-            padding: 20px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            margin-bottom: 20px; 
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 10px; 
-        }
-        th, td { 
-            border-bottom: 1px solid #ddd; 
-            padding: 12px; 
-            text-align: left; 
-        }
-        th { 
-            background-color: #f8f9fa; 
-            color: var(--verde); 
-        }
-        .badge { 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            font-weight: bold; 
-            font-size: 12px; 
-        }
-        .critico { background: #ffebee; color: #c62828; }
-        .alerta { background: #fff8e1; color: #f57f17; }
-        .ok { background: #e8f5e9; color: #2e7d32; }
-
-        .flex-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 20px; 
-        }
-        .note { 
-            border-left: 4px solid var(--rojo); 
-            background: #fff5f5; 
-            padding: 15px; 
-            margin: 15px 0; 
-            font-style: italic; 
-        }
-        .manager-analysis { 
-            background: #2c3e50; 
-            color: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin-top: 20px;
-        }
-        .manager-analysis h3 { 
-            color: #ecf0f1; 
-        }
-
-        #loader { 
-            text-align: center; 
-            padding: 50px; 
-            font-size: 20px; 
-            color: var(--verde); 
-        }
-        .btn-imprimir {
-            background: var(--verde);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        .btn-imprimir:hover {
-            opacity: 0.9;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; color: var(--dark); margin: 0; padding: 0; }
+        header { background: var(--primary); color: white; padding: 1.5rem; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         
-        @media print {
-            .btn-imprimir { display: none; }
-            body { background: white; }
-            .card { box-shadow: none; border: 1px solid #eee; }
-        }
+        /* Sección de Login/Identificación */
+        #login-section { text-align: center; margin-top: 4rem; }
+        .login-card { background: white; padding: 2.5rem; border-radius: 15px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 5px solid var(--secondary); }
+        input[type="email"] { padding: 12px; width: 280px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; outline: none; transition: 0.3s; }
+        input[type="email"]:focus { border-color: var(--secondary); }
+        .btn-main { padding: 12px 25px; background: var(--secondary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .btn-main:hover { background: var(--primary); transform: translateY(-2px); }
+
+        /* Tarjetas de Reporte */
+        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 2rem; border-left: 6px solid var(--secondary); }
+        .card-danger { border-left-color: var(--danger); }
+        h2 { color: var(--primary); margin-top: 0; display: flex; align-items: center; gap: 10px; }
+
+        /* Tablas */
+        .table-res { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th { background: #f1f3f5; color: var(--primary); padding: 12px; text-align: left; font-size: 0.9rem; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .bg-red { background: #fee2e2; color: #991b1b; }
+        .bg-yellow { background: #fef3c7; color: #92400e; }
+        .bg-green { background: #d1fae5; color: #065f46; }
+
+        /* Loader Overlay */
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; flex-direction: column; justify-content: center; align-items: center; }
+        .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: var(--secondary); border-radius: 50%; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-logout { background: none; border: 1px solid #ccc; color: #888; padding: 5px 12px; border-radius: 5px; cursor: pointer; margin-top: 20px; font-size: 0.8rem; }
+        .faltantes-box { background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 1rem; }
+        .id-tag { background: #4a5568; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin: 2px; display: inline-block; }
+
+        @media print { .no-print { display: none; } .card { box-shadow: none; border: 1px solid #eee; } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>🛡️ Tablero de Control Sanitario PYSIGA</h1>
-        <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Reporte</button>
+    <div id="overlay">
+        <div class="loader"></div>
+        <p style="margin-top: 1rem; font-weight: bold; color: var(--primary);">Analizando estatus sanitario...</p>
     </div>
 
-    <div id="loader">Consultando base de datos sanitaria... 🐄💉</div>
+    <header>
+        <h1>PYSIGA SANIDAD</h1>
+        <p id="display-email" style="font-size: 0.85rem; opacity: 0.8;"></p>
+    </header>
 
-    <div id="content" style="display: none;">
-        
-        <div class="card">
-            <h2>1. DASHBOARD DE BLINDAJE SANITARIO (VACUNACIÓN)</h2>
-            <p>Este panel compara el estatus ideal de tu protocolo contra la realidad de tus registros.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Vacuna / Biológico</th>
-                        <th>Aplicados</th>
-                        <th>Total a Vacunar</th>
-                        <th>Cobertura (%)</th>
-                        <th>Estatus</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-blindaje"></tbody>
-            </table>
-            <div class="note">
-                <strong>Nota del Veterinario:</strong> Aplica la regla de "Presunción de falta": si el evento sanitario no está registrado en el sistema, a nivel gerencial y legal el animal se considera desprotegido. Coberturas menores al 80% representan un riesgo biológico crítico para la inversión.
+    <div class="container">
+        <div id="login-section">
+            <div class="login-card">
+                <h3>Reporte Sanitario</h3>
+                <p style="color: #666; font-size: 0.9rem;">Ingrese el correo de la cuenta para consultar</p>
+                <input type="email" id="email-field" placeholder="ejemplo@correo.com">
+                <button class="btn-main" onclick="guardarYConsultar()">Consultar</button>
             </div>
         </div>
 
-        <div class="card">
-            <h2>2. AUDITORÍA DE PRUEBAS DIAGNÓSTICAS (VIGILANCIA)</h2>
-            <p>Control de enfermedades mandatorias para movilización e inocuidad láctea.</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Prueba Obligatoria</th>
-                        <th>Realizadas</th>
-                        <th>Total a Chequear</th>
-                        <th>Vigencia</th>
-                        <th>Estatus</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-auditoria"></tbody>
-            </table>
-        </div>
-
-        <div class="card">
-            <h2>3. LISTADO DE ANIMALES FALTANTES (HOJA DE RUTA)</h2>
-            <p>Lista generada automáticamente para coordinar el trabajo en la manga.</p>
-            <ul id="lista-faltantes" style="line-height: 1.8;"></ul>
-        </div>
-
-        <div class="flex-grid">
-            <div class="card">
-                <h3>A. Incidencia de Eventos Sanitarios</h3>
-                <p><em>(Basado en observaciones y causas de tratamientos)</em></p>
-                <ul id="lista-incidencia"></ul>
-            </div>
-            <div class="card">
-                <h3>B. Uso de Medicamentos</h3>
-                <p><em>(Distribución de la inversión en insumos médicos)</em></p>
-                <ul id="lista-medicamentos"></ul>
-            </div>
-        </div>
-
-        <div class="manager-analysis">
-            <h3>📈 ANÁLISIS DEL PRODUCTOR (GERENCIA)</h3>
-            <p><strong>Riesgo de Capital:</strong> Tienes un alto porcentaje de tu inventario activo expuesto a enfermedades de control oficial obligatorio.</p>
-            <p><strong>Acción Inmediata:</strong> Necesitas digitalizar los registros de las vacunas de este ciclo. Si los biológicos se aplicaron pero no se anotaron, el sistema no puede defender ni avalar la inocuidad de tu producción de leche y carne.</p>
-            <p><strong>Bloqueo de Ventas:</strong> Legalmente la movilización de semovientes está comprometida por la ausencia de pruebas vigentes registradas en plataforma.</p>
-        </div>
-
-    </div>
-</div>
-
-<script>
-    // Conexión al Worker de Cloudflare
-    const WORKER_URL = "https://pysiga.d-alexjose.workers.dev";
-    
-    async function cargarDatos() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const email = urlParams.get('email');
-        
-        if (!email) { 
-            document.getElementById('loader').innerHTML = `<span style="color:var(--rojo)">Acceso no autorizado. Falta el parámetro de correo (email) en la URL.</span>`;
-            return; 
-        }
-
-        try {
-            const res = await fetch(WORKER_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ accion: "reporteSanitario", email: email })
-            });
-            const data = await res.json();
+        <div id="report-section" style="display: none;">
             
-            if (!data.ok) throw new Error(data.error);
+            <div class="card">
+                <h2>📊 Cobertura de Vacunación</h2>
+                <div class="table-res">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vacuna / Biológico</th>
+                                <th>Aplicados</th>
+                                <th>Total Hato</th>
+                                <th>Cobertura</th>
+                                <th>Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-vacunas"></tbody>
+                    </table>
+                </div>
+            </div>
 
-            // Poblar Dashboard Blindaje
-            const tbBlindaje = document.getElementById('tabla-blindaje');
-            data.dashboard.forEach(d => {
-                let badgeClass = d.porcentaje < 50 ? 'critico' : (d.porcentaje < 80 ? 'alerta' : 'ok');
-                let badgeText = d.porcentaje < 50 ? '🔴 CRÍTICO' : (d.porcentaje < 80 ? '🟡 ALERTA' : '🟢 ÓPTIMO');
-                
-                tbBlindaje.innerHTML += `
-                    <tr>
-                        <td><strong>${d.vacuna}</strong></td>
-                        <td>${d.aplicados}</td>
-                        <td>${d.total}</td>
-                        <td><strong>${d.porcentaje}%</strong></td>
-                        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-                    </tr>
-                `;
-            });
+            <div class="card">
+                <h2>🔍 Auditoría de Pruebas</h2>
+                <div class="table-res">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Prueba Diagnóstica</th>
+                                <th>Realizadas</th>
+                                <th>Población</th>
+                                <th>Vigencia</th>
+                                <th>Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-pruebas"></tbody>
+                    </table>
+                </div>
+            </div>
 
-            // Poblar Auditoría
-            const tbAuditoria = document.getElementById('tabla-auditoria');
-            data.auditoria.forEach(a => {
-                tbAuditoria.innerHTML += `
-                    <tr>
-                        <td>${a.prueba}</td>
-                        <td>${a.realizadas}</td>
-                        <td>${a.total}</td>
-                        <td>${a.estatus}</td>
-                        <td><strong>${a.color}</strong></td>
-                    </tr>
-                `;
-            });
+            <div class="card card-danger">
+                <h2>🚨 Animales Pendientes (Manga)</h2>
+                <p style="font-size: 0.9rem; color: #555;">IDs que requieren atención inmediata según el protocolo:</p>
+                <div id="box-faltantes" class="faltantes-box"></div>
+            </div>
 
-            // Poblar Faltantes
-            const ulFaltantes = document.getElementById('lista-faltantes');
-            ulFaltantes.innerHTML += `<li><strong>Urgencia Legal (Aftosa/Rabia):</strong> IDs (${data.faltantes.urgenciaLegal.length > 0 ? data.faltantes.urgenciaLegal.join(', ') : 'Ninguno'})</li>`;
-            ulFaltantes.innerHTML += `<li><strong>Faltantes Brucelosis (Cepa 19/RB51):</strong> IDs (${data.faltantes.brucelosis.length > 0 ? data.faltantes.brucelosis.join(', ') : 'Ninguno'})</li>`;
-            ulFaltantes.innerHTML += `<li><strong>Faltantes Complejo Reproductivo:</strong> IDs (${data.faltantes.reproductivo.length > 0 ? data.faltantes.reproductivo.join(', ') : 'Ninguno'})</li>`;
-            ulFaltantes.innerHTML += `<li><strong>Faltantes Pruebas de Sangre:</strong> IDs (${data.faltantes.sangre.length > 0 ? data.faltantes.sangre.join(', ') : 'Ninguno'})</li>`;
+            <div class="no-print" style="text-align: center; margin-bottom: 3rem;">
+                <button class="btn-main" onclick="window.print()">🖨️ Imprimir Reporte</button><br>
+                <button class="btn-logout" onclick="limpiarSesion()">Cerrar Sesión / Cambiar Correo</button>
+            </div>
+        </div>
+    </div>
 
-            // Poblar Incidencia (Porcentajes basados en conteos de registros)
-            let totIncidencias = data.graficos.incidencias.rabia + data.graficos.incidencias.parasitismo + data.graficos.incidencias.otras;
-            if (totIncidencias === 0) totIncidencias = 1; // Evitar división por cero
+    <script>
+        const WORKER_URL = "https://pysiga.d-alexjose.workers.dev";
 
-            document.getElementById('lista-incidencia').innerHTML = `
-                <li>Rabia / Sospecha: ${Math.round((data.graficos.incidencias.rabia / totIncidencias) * 100)}% (${data.graficos.incidencias.rabia} casos)</li>
-                <li>Parasitismo Gastrointestinal/Externo: ${Math.round((data.graficos.incidencias.parasitismo / totIncidencias) * 100)}% (${data.graficos.incidencias.parasitismo} casos)</li>
-                <li>Otras Patologías (Podal/Mastitis/Etc): ${Math.round((data.graficos.incidencias.otras / totIncidencias) * 100)}% (${data.graficos.incidencias.otras} casos)</li>
-            `;
+        // Al cargar la página, verifica si ya hay un correo
+        document.addEventListener("DOMContentLoaded", () => {
+            const correoGuardado = localStorage.getItem("pysiga_session_email");
+            if (correoGuardado) {
+                ejecutarConsulta(correoGuardado);
+            }
+        });
 
-            // Poblar Medicamentos
-            let totMeds = data.graficos.usoMeds.desparasitantes + data.graficos.usoMeds.vacunas + data.graficos.usoMeds.antibioticos;
-            if (totMeds === 0) totMeds = 1; // Evitar división por cero
-
-            document.getElementById('lista-medicamentos').innerHTML = `
-                <li>Desparasitantes: ${Math.round((data.graficos.usoMeds.desparasitantes / totMeds) * 100)}% de los registros</li>
-                <li>Vacunas (Biológicos): ${Math.round((data.graficos.usoMeds.vacunas / totMeds) * 100)}% de los registros</li>
-                <li>Antibióticos/Vitaminas: ${Math.round((data.graficos.usoMeds.antibioticos / totMeds) * 100)}% de los registros</li>
-            `;
-
-            // Mostrar contenido y ocultar loader
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
-
-        } catch (error) {
-            document.getElementById('loader').innerHTML = `<span style="color:var(--rojo)">Error de conexión o procesamiento: ${error.message}</span>`;
+        function guardarYConsultar() {
+            const email = document.getElementById("email-field").value.trim();
+            if (email && email.includes("@")) {
+                localStorage.setItem("pysiga_session_email", email);
+                ejecutarConsulta(email);
+            } else {
+                alert("Por favor, ingrese un correo válido.");
+            }
         }
-    }
 
-    // Iniciar carga al abrir la página
-    document.addEventListener("DOMContentLoaded", cargarDatos);
-</script>
+        function limpiarSesion() {
+            localStorage.removeItem("pysiga_session_email");
+            location.reload();
+        }
+
+        async function ejecutarConsulta(email) {
+            document.getElementById("login-section").style.display = "none";
+            document.getElementById("overlay").style.display = "flex";
+            document.getElementById("display-email").textContent = "Expediente: " + email;
+
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ accion: "reporteSanitario", email: email })
+                });
+
+                const data = await response.json();
+                if (!data.ok) throw new Error(data.error || "No se encontraron datos");
+
+                // --- TABLA VACUNAS ---
+                const tVacunas = document.getElementById("tbody-vacunas");
+                tVacunas.innerHTML = "";
+                data.dashboard.forEach(v => {
+                    const badgeColor = v.porcentaje < 50 ? 'bg-red' : (v.porcentaje < 80 ? 'bg-yellow' : 'bg-green');
+                    tVacunas.innerHTML += `
+                        <tr>
+                            <td><strong>${v.vacuna}</strong></td>
+                            <td>${v.aplicados}</td>
+                            <td>${v.total}</td>
+                            <td>${v.porcentaje}%</td>
+                            <td><span class="status-badge ${badgeColor}">${v.porcentaje < 80 ? 'INCOMPLETO' : 'PROTEGIDO'}</span></td>
+                        </tr>`;
+                });
+
+                // --- TABLA PRUEBAS ---
+                const tPruebas = document.getElementById("tbody-pruebas");
+                tPruebas.innerHTML = "";
+                data.auditoria.forEach(p => {
+                    tPruebas.innerHTML += `
+                        <tr>
+                            <td>${p.prueba}</td>
+                            <td>${p.realizadas}</td>
+                            <td>${p.total}</td>
+                            <td>${p.estatus}</td>
+                            <td>${p.color || '⚪'}</td>
+                        </tr>`;
+                });
+
+                // --- BOX FALTANTES ---
+                const boxFaltantes = document.getElementById("box-faltantes");
+                const f = data.faltantes;
+                
+                const crearTags = (lista) => lista.length ? lista.map(id => `<span class="id-tag">${id}</span>`).join('') : '<em>Ninguno</em>';
+
+                boxFaltantes.innerHTML = `
+                    <p><strong>Urgencia Ciclo (Aftosa/Rabia):</strong><br> ${crearTags(f.urgenciaLegal)}</p>
+                    <hr style="border:0; border-top:1px solid #feb2b2; margin: 10px 0;">
+                    <p><strong>Pendientes Brucelosis:</strong><br> ${crearTags(f.brucelosis)}</p>
+                    <hr style="border:0; border-top:1px solid #feb2b2; margin: 10px 0;">
+                    <p><strong>Pendientes Muestreo Sangre:</strong><br> ${crearTags(f.sangre)}</p>
+                `;
+
+                document.getElementById("report-section").style.display = "block";
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                limpiarSesion();
+            } finally {
+                document.getElementById("overlay").style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
