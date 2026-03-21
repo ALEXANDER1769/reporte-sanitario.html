@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PYSIGA | Tablero Sanitario Avanzado</title>
+    <title>PYSIGA | Reporte Sanitario</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --verde: #1b4332; --verde-claro: #2d6a4f; --rojo: #d90429; --gris: #f4f7f6; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gris); margin: 0; padding: 15px; color: #333; }
-        h1, h2, h3 { color: var(--verde); margin-top: 0; }
+        h2, h3 { color: var(--verde); margin-top: 0; }
         
+        /* Header y Botones */
+        .header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--verde-claro); padding-bottom: 10px; margin-bottom: 20px; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; gap: 5px; }
+        .btn-print { background-color: #0077b6; }
+        .btn-close { background-color: var(--rojo); }
+
         /* Grid de KPIs */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
         .kpi-card { background: white; padding: 15px 10px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid var(--verde-claro); }
         .kpi-card.alerta { border-bottom-color: var(--rojo); }
         .kpi-val { font-size: 1.8rem; font-weight: bold; display: block; margin-bottom: 5px; }
-        .kpi-title { font-size: 0.75rem; text-transform: uppercase; color: #555; }
+        .kpi-title { font-size: 0.75rem; text-transform: uppercase; color: #555; font-weight: bold; }
         .kpi-meta { font-size: 0.7rem; color: #888; display: block; margin-top: 5px; }
 
         /* Gráficos Responsivos */
@@ -33,48 +40,63 @@
         
         #loader { text-align: center; padding: 50px; font-size: 1.2rem; font-weight: bold; color: var(--verde); }
         #dashboard { display: none; }
+
+        /* Modo Impresión */
+        @media print {
+            .btn-group, label, select { display: none !important; }
+            body { background: white; padding: 0; }
+            .kpi-card { border: 1px solid #ccc; break-inside: avoid; }
+            .chart-wrapper { page-break-inside: avoid; }
+            .table-card { box-shadow: none; border: 1px solid #ccc; }
+        }
     </style>
 </head>
 <body>
 
-    <h2 style="text-align: center;">🛡️ Tablero de Control Sanitario</h2>
+    <div class="header-container">
+        <h2 style="margin: 0;">REPORTE SANITARIO</h2>
+        <div class="btn-group">
+            <button onclick="window.print()" class="btn btn-print">🖨️ Imprimir</button>
+            <button onclick="cerrarPantalla()" class="btn btn-close">❌ Cerrar</button>
+        </div>
+    </div>
     
-    <div id="loader">🐄 Cargando y calculando indicadores...</div>
+    <div id="loader">Cargando base de datos y calculando métricas...</div>
 
     <div id="dashboard">
-        <h3>💉 Cobertura de Vacunación</h3>
+        <h3>Vacunación y Desparasitación</h3>
         <div class="kpi-grid" id="kpi-vacunas"></div>
 
-        <h3>🔬 Pruebas y Control Parasitario</h3>
+        <h3>Pruebas Diagnósticas</h3>
         <div class="kpi-grid" id="kpi-pruebas"></div>
 
         <div class="charts-container">
             <div class="chart-card">
-                <h3>Ocurrencia de Actividades por Mes</h3>
+                <h3>Actividades por Mes</h3>
                 <div class="chart-wrapper"><canvas id="chartMeses"></canvas></div>
             </div>
             <div class="chart-card">
-                <h3>Uso de Insumos / Medicamentos</h3>
+                <h3>Tratamientos/Actividades Aplicadas</h3>
                 <div class="chart-wrapper"><canvas id="chartMedicamentos"></canvas></div>
             </div>
         </div>
 
         <div class="table-card">
-            <h3>🚨 Listado de Animales Faltantes</h3>
-            <label for="selector-kpi"><strong>Seleccione la actividad para ver los animales que faltan:</strong></label>
+            <h3>Listado de Animales Faltantes</h3>
+            <label for="selector-kpi"><strong>Seleccione indicador a consultar:</strong></label>
             <br>
             <select id="selector-kpi" onchange="mostrarTabla()">
-                <option value="aftosa">Vacuna Aftosa</option>
-                <option value="cepa19">Vacuna Cepa 19 (Brucelosis)</option>
-                <option value="rabia">Vacuna Rabia</option>
-                <option value="leptospira">Vacuna Leptospira</option>
-                <option value="clostridios">Vacuna Clostridios</option>
-                <option value="desparasitacion">Desparasitación</option>
-                <option value="prueba_brucelosis">Prueba de Brucelosis (Sangre)</option>
-                <option value="prueba_tuberculosis">Prueba de Tuberculosis</option>
-                <option value="prueba_mastitis">Prueba de Mastitis (CMT)</option>
-                <option value="prueba_sangre">Prueba de Sangre (Hemoparásitos)</option>
-                <option value="prueba_heces">Prueba de Heces (Coprología)</option>
+                <option value="aftosa">% Vacunados Aftosa</option>
+                <option value="cepa19">% Vacunados Cepa 19 (Brucelosis)</option>
+                <option value="rabia">% Vacunados Rabia</option>
+                <option value="leptospira">% Vacunados Leptospira</option>
+                <option value="clostridios">% Vacunados Clostridios</option>
+                <option value="desparasitacion">% Desparasitados</option>
+                <option value="prueba_brucelosis">% Prueba Brucelosis (Sangre)</option>
+                <option value="prueba_tuberculosis">% Prueba Tuberculosis</option>
+                <option value="prueba_mastitis">% Prueba Mastitis (CMT)</option>
+                <option value="prueba_sangre">% Prueba Sangre (Hemoparásitos)</option>
+                <option value="prueba_heces">% Prueba Heces (Coprología)</option>
             </select>
 
             <table id="tabla-faltantes">
@@ -94,6 +116,15 @@
 <script>
     let datosFaltantes = {};
 
+    function cerrarPantalla() {
+        if (window.AppInventor) {
+            window.AppInventor.setWebViewString("CERRAR");
+        } else {
+            window.close();
+            alert("Botón cerrar presionado (Funciona dentro de la App).");
+        }
+    }
+
     async function cargarDatos() {
         const url = "https://pysiga.d-alexjose.workers.dev";
         const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('email') || "alexdugarte@yahoo.com";
@@ -110,15 +141,15 @@
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
 
-                datosFaltantes = data.faltantesDetalle; // Guardar listas para el dropdown
+                datosFaltantes = data.faltantesDetalle; 
                 
                 renderizarKPIs('kpi-vacunas', data.kpis.vacunas);
                 renderizarKPIs('kpi-pruebas', data.kpis.pruebas);
 
-                renderizarGrafico('chartMeses', 'Actividades', data.graficoActividades.labels, data.graficoActividades.valores, '#2d6a4f');
-                renderizarGrafico('chartMedicamentos', 'Uso (Cant.)', data.graficoMedicamentos.labels, data.graficoMedicamentos.valores, '#1b4332');
+                renderizarGrafico('chartMeses', 'Frecuencia por Mes', data.graficoActividades.labels, data.graficoActividades.valores, '#2d6a4f');
+                renderizarGrafico('chartMedicamentos', 'Cantidad Aplicada', data.graficoMedicamentos.labels, data.graficoMedicamentos.valores, '#1b4332');
 
-                mostrarTabla(); // Renderiza la tabla inicial
+                mostrarTabla(); 
             } else {
                 document.getElementById('loader').innerText = "Error: " + data.error;
             }
@@ -143,17 +174,16 @@
         });
     }
 
-    // 🔥 TODOS LOS GRÁFICOS AHORA SON DE BARRAS ("bar") Y RESPONSIVOS
     function renderizarGrafico(canvasId, label, labelsData, dataValues, color) {
         new Chart(document.getElementById(canvasId), {
-            type: 'bar',
+            type: 'bar', // Forzado a barras
             data: {
                 labels: labelsData,
                 datasets: [{ label: label, data: dataValues, backgroundColor: color }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // Vital para ajustarse a móviles
+                maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true } }
             }
         });
@@ -165,7 +195,7 @@
         const tbody = document.getElementById('tbody-faltantes');
         
         if (animales.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green;">✅ Todos los animales de esta categoría están al día.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green; font-weight:bold;">✅ Todos los animales de esta categoría están al día.</td></tr>`;
             return;
         }
 
