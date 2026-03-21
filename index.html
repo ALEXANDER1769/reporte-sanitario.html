@@ -10,14 +10,12 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gris); margin: 0; padding: 15px; color: #333; }
         h2, h3 { color: var(--verde); margin-top: 0; }
         
-        /* Header y Botones */
         .header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--verde-claro); padding-bottom: 10px; margin-bottom: 20px; }
         .btn-group { display: flex; gap: 10px; }
         .btn { padding: 8px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; gap: 5px; }
         .btn-print { background-color: #0077b6; }
         .btn-close { background-color: var(--rojo); }
 
-        /* Grid de KPIs */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
         .kpi-card { background: white; padding: 15px 10px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid var(--verde-claro); }
         .kpi-card.alerta { border-bottom-color: var(--rojo); }
@@ -25,12 +23,10 @@
         .kpi-title { font-size: 0.75rem; text-transform: uppercase; color: #555; font-weight: bold; }
         .kpi-meta { font-size: 0.7rem; color: #888; display: block; margin-top: 5px; }
 
-        /* Gráficos Responsivos */
         .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
         .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .chart-wrapper { position: relative; height: 300px; width: 100%; }
 
-        /* Tabla y Selector */
         .table-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
         select { padding: 10px; font-size: 1rem; width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; }
@@ -41,7 +37,6 @@
         #loader { text-align: center; padding: 50px; font-size: 1.2rem; font-weight: bold; color: var(--verde); }
         #dashboard { display: none; }
 
-        /* Modo Impresión */
         @media print {
             .btn-group, label, select { display: none !important; }
             body { background: white; padding: 0; }
@@ -133,7 +128,8 @@
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accion: "reporteSanitario", email: email })
+                // 👇 ESTA LÍNEA ES LA QUE HACÍA QUE LA PANTALLA NO CARGARA (Se agregó el token)
+                body: JSON.stringify({ accion: "reporteSanitario", email: email, token: "pysiga-node" })
             });
             const data = await res.json();
 
@@ -151,10 +147,11 @@
 
                 mostrarTabla(); 
             } else {
-                document.getElementById('loader').innerText = "Error: " + data.error;
+                // Si el script de Google arroja un error, te lo mostrará en rojo para saber por qué
+                document.getElementById('loader').innerHTML = `<span style="color:red">Error: ${data.error}</span>`;
             }
         } catch (error) {
-            document.getElementById('loader').innerText = "Error de conexión.";
+            document.getElementById('loader').innerHTML = `<span style="color:red">Fallo de conexión con el Servidor.</span>`;
         }
     }
 
@@ -176,7 +173,7 @@
 
     function renderizarGrafico(canvasId, label, labelsData, dataValues, color) {
         new Chart(document.getElementById(canvasId), {
-            type: 'bar', // Forzado a barras
+            type: 'bar',
             data: {
                 labels: labelsData,
                 datasets: [{ label: label, data: dataValues, backgroundColor: color }]
