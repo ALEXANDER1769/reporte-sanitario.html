@@ -3,210 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PYSIGA | Reporte Sanitario</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dashboard de Blindaje Sanitario | PYSIGA</title>
     <style>
-        :root { --verde: #1b4332; --verde-claro: #2d6a4f; --rojo: #d90429; --gris: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gris); margin: 0; padding: 15px; color: #333; }
-        h2, h3 { color: var(--verde); margin-top: 0; }
+        :root {
+            --verde: #2f6f4e; 
+            --rojo: #e74c3c; 
+            --amarillo: #f1c40f; 
+            --fondo: #f4f6f9; 
+            --blanco: #fff; 
+            --texto: #333;
+        }
+        body { 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: var(--fondo); 
+            color: var(--texto); 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: auto; 
+        }
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--verde); 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+        }
+        h1, h2, h3 { 
+            color: var(--verde); 
+            margin-top: 0; 
+        }
+        .card { 
+            background: var(--blanco); 
+            border-radius: 8px; 
+            padding: 20px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            margin-bottom: 20px; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+        }
+        th, td { 
+            border-bottom: 1px solid #ddd; 
+            padding: 12px; 
+            text-align: left; 
+        }
+        th { 
+            background-color: #f8f9fa; 
+            color: var(--verde); 
+        }
+        .badge { 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            font-size: 12px; 
+        }
+        .critico { background: #ffebee; color: #c62828; }
+        .alerta { background: #fff8e1; color: #f57f17; }
+        .ok { background: #e8f5e9; color: #2e7d32; }
+
+        .flex-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+        }
+        .note { 
+            border-left: 4px solid var(--rojo); 
+            background: #fff5f5; 
+            padding: 15px; 
+            margin: 15px 0; 
+            font-style: italic; 
+        }
+        .manager-analysis { 
+            background: #2c3e50; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 20px;
+        }
+        .manager-analysis h3 { 
+            color: #ecf0f1; 
+        }
+
+        #loader { 
+            text-align: center; 
+            padding: 50px; 
+            font-size: 20px; 
+            color: var(--verde); 
+        }
+        .btn-imprimir {
+            background: var(--verde);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .btn-imprimir:hover {
+            opacity: 0.9;
+        }
         
-        .header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--verde-claro); padding-bottom: 10px; margin-bottom: 20px; }
-        .btn-group { display: flex; gap: 10px; }
-        .btn { padding: 8px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; gap: 5px; }
-        .btn-print { background-color: #0077b6; }
-        .btn-close { background-color: var(--rojo); }
-
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
-        .kpi-card { background: white; padding: 15px 10px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid var(--verde-claro); }
-        .kpi-card.alerta { border-bottom-color: var(--rojo); }
-        .kpi-val { font-size: 1.8rem; font-weight: bold; display: block; margin-bottom: 5px; }
-        .kpi-title { font-size: 0.75rem; text-transform: uppercase; color: #555; font-weight: bold; }
-        .kpi-meta { font-size: 0.7rem; color: #888; display: block; margin-top: 5px; }
-
-        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .chart-wrapper { position: relative; height: 300px; width: 100%; }
-
-        .table-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
-        select { padding: 10px; font-size: 1rem; width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; }
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th { background: var(--verde); color: white; padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
-        .badge { background: #e9ecef; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
-        
-        #loader { text-align: center; padding: 50px; font-size: 1.2rem; font-weight: bold; color: var(--verde); }
-        #dashboard { display: none; }
-
         @media print {
-            .btn-group, label, select { display: none !important; }
-            body { background: white; padding: 0; }
-            .kpi-card { border: 1px solid #ccc; break-inside: avoid; }
-            .chart-wrapper { page-break-inside: avoid; }
-            .table-card { box-shadow: none; border: 1px solid #ccc; }
+            .btn-imprimir { display: none; }
+            body { background: white; }
+            .card { box-shadow: none; border: 1px solid #eee; }
         }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h2 style="margin: 0;">REPORTE SANITARIO</h2>
-        <div class="btn-group">
-            <button onclick="window.print()" class="btn btn-print">🖨️ Imprimir</button>
-            <button onclick="cerrarPantalla()" class="btn btn-close">❌ Cerrar</button>
-        </div>
+<div class="container">
+    <div class="header">
+        <h1>🛡️ Tablero de Control Sanitario PYSIGA</h1>
+        <button class="btn-imprimir" onclick="window.print()">🖨️ Imprimir Reporte</button>
     </div>
-    
-    <div id="loader">Cargando base de datos y calculando métricas...</div>
 
-    <div id="dashboard">
-        <h3>Vacunación y Desparasitación</h3>
-        <div class="kpi-grid" id="kpi-vacunas"></div>
+    <div id="loader">Consultando base de datos sanitaria... 🐄💉</div>
 
-        <h3>Pruebas Diagnósticas</h3>
-        <div class="kpi-grid" id="kpi-pruebas"></div>
-
-        <div class="charts-container">
-            <div class="chart-card">
-                <h3>Actividades por Mes</h3>
-                <div class="chart-wrapper"><canvas id="chartMeses"></canvas></div>
-            </div>
-            <div class="chart-card">
-                <h3>Tratamientos/Actividades Aplicadas</h3>
-                <div class="chart-wrapper"><canvas id="chartMedicamentos"></canvas></div>
-            </div>
-        </div>
-
-        <div class="table-card">
-            <h3>Listado de Animales Faltantes</h3>
-            <label for="selector-kpi"><strong>Seleccione indicador a consultar:</strong></label>
-            <br>
-            <select id="selector-kpi" onchange="mostrarTabla()">
-                <option value="aftosa">% Vacunados Aftosa</option>
-                <option value="cepa19">% Vacunados Cepa 19 (Brucelosis)</option>
-                <option value="rabia">% Vacunados Rabia</option>
-                <option value="leptospira">% Vacunados Leptospira</option>
-                <option value="clostridios">% Vacunados Clostridios</option>
-                <option value="desparasitacion">% Desparasitados</option>
-                <option value="prueba_brucelosis">% Prueba Brucelosis (Sangre)</option>
-                <option value="prueba_tuberculosis">% Prueba Tuberculosis</option>
-                <option value="prueba_mastitis">% Prueba Mastitis (CMT)</option>
-                <option value="prueba_sangre">% Prueba Sangre (Hemoparásitos)</option>
-                <option value="prueba_heces">% Prueba Heces (Coprología)</option>
-            </select>
-
-            <table id="tabla-faltantes">
+    <div id="content" style="display: none;">
+        
+        <div class="card">
+            <h2>1. DASHBOARD DE BLINDAJE SANITARIO (VACUNACIÓN)</h2>
+            <p>Este panel compara el estatus ideal de tu protocolo contra la realidad de tus registros.</p>
+            <table>
                 <thead>
                     <tr>
-                        <th>ID / Chip</th>
-                        <th>Nro Práctico</th>
-                        <th>Clasificación</th>
-                        <th>Estado</th>
+                        <th>Vacuna / Biológico</th>
+                        <th>Aplicados</th>
+                        <th>Total a Vacunar</th>
+                        <th>Cobertura (%)</th>
+                        <th>Estatus</th>
                     </tr>
                 </thead>
-                <tbody id="tbody-faltantes"></tbody>
+                <tbody id="tabla-blindaje"></tbody>
+            </table>
+            <div class="note">
+                <strong>Nota del Veterinario:</strong> Aplica la regla de "Presunción de falta": si el evento sanitario no está registrado en el sistema, a nivel gerencial y legal el animal se considera desprotegido. Coberturas menores al 80% representan un riesgo biológico crítico para la inversión.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>2. AUDITORÍA DE PRUEBAS DIAGNÓSTICAS (VIGILANCIA)</h2>
+            <p>Control de enfermedades mandatorias para movilización e inocuidad láctea.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Prueba Obligatoria</th>
+                        <th>Realizadas</th>
+                        <th>Total a Chequear</th>
+                        <th>Vigencia</th>
+                        <th>Estatus</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-auditoria"></tbody>
             </table>
         </div>
+
+        <div class="card">
+            <h2>3. LISTADO DE ANIMALES FALTANTES (HOJA DE RUTA)</h2>
+            <p>Lista generada automáticamente para coordinar el trabajo en la manga.</p>
+            <ul id="lista-faltantes" style="line-height: 1.8;"></ul>
+        </div>
+
+        <div class="flex-grid">
+            <div class="card">
+                <h3>A. Incidencia de Eventos Sanitarios</h3>
+                <p><em>(Basado en observaciones y causas de tratamientos)</em></p>
+                <ul id="lista-incidencia"></ul>
+            </div>
+            <div class="card">
+                <h3>B. Uso de Medicamentos</h3>
+                <p><em>(Distribución de la inversión en insumos médicos)</em></p>
+                <ul id="lista-medicamentos"></ul>
+            </div>
+        </div>
+
+        <div class="manager-analysis">
+            <h3>📈 ANÁLISIS DEL PRODUCTOR (GERENCIA)</h3>
+            <p><strong>Riesgo de Capital:</strong> Tienes un alto porcentaje de tu inventario activo expuesto a enfermedades de control oficial obligatorio.</p>
+            <p><strong>Acción Inmediata:</strong> Necesitas digitalizar los registros de las vacunas de este ciclo. Si los biológicos se aplicaron pero no se anotaron, el sistema no puede defender ni avalar la inocuidad de tu producción de leche y carne.</p>
+            <p><strong>Bloqueo de Ventas:</strong> Legalmente la movilización de semovientes está comprometida por la ausencia de pruebas vigentes registradas en plataforma.</p>
+        </div>
+
     </div>
+</div>
 
 <script>
-    let datosFaltantes = {};
-
-    function cerrarPantalla() {
-        if (window.AppInventor) {
-            window.AppInventor.setWebViewString("CERRAR");
-        } else {
-            window.close();
-            alert("Botón cerrar presionado (Funciona dentro de la App).");
-        }
-    }
-
+    // Conexión al Worker de Cloudflare
+    const WORKER_URL = "https://pysiga.d-alexjose.workers.dev";
+    
     async function cargarDatos() {
-        const url = "https://pysiga.d-alexjose.workers.dev";
-        const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('email') || "alexdugarte@yahoo.com";
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+        
+        if (!email) { 
+            document.getElementById('loader').innerHTML = `<span style="color:var(--rojo)">Acceso no autorizado. Falta el parámetro de correo (email) en la URL.</span>`;
+            return; 
+        }
 
         try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                // 👇 ESTA LÍNEA ES LA QUE HACÍA QUE LA PANTALLA NO CARGARA (Se agregó el token)
-                body: JSON.stringify({ accion: "reporteSanitario", email: email, token: "pysiga-node" })
+            const res = await fetch(WORKER_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accion: "reporteSanitario", email: email })
             });
             const data = await res.json();
+            
+            if (!data.ok) throw new Error(data.error);
 
-            if (data.ok) {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-
-                datosFaltantes = data.faltantesDetalle; 
+            // Poblar Dashboard Blindaje
+            const tbBlindaje = document.getElementById('tabla-blindaje');
+            data.dashboard.forEach(d => {
+                let badgeClass = d.porcentaje < 50 ? 'critico' : (d.porcentaje < 80 ? 'alerta' : 'ok');
+                let badgeText = d.porcentaje < 50 ? '🔴 CRÍTICO' : (d.porcentaje < 80 ? '🟡 ALERTA' : '🟢 ÓPTIMO');
                 
-                renderizarKPIs('kpi-vacunas', data.kpis.vacunas);
-                renderizarKPIs('kpi-pruebas', data.kpis.pruebas);
+                tbBlindaje.innerHTML += `
+                    <tr>
+                        <td><strong>${d.vacuna}</strong></td>
+                        <td>${d.aplicados}</td>
+                        <td>${d.total}</td>
+                        <td><strong>${d.porcentaje}%</strong></td>
+                        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                    </tr>
+                `;
+            });
 
-                renderizarGrafico('chartMeses', 'Frecuencia por Mes', data.graficoActividades.labels, data.graficoActividades.valores, '#2d6a4f');
-                renderizarGrafico('chartMedicamentos', 'Cantidad Aplicada', data.graficoMedicamentos.labels, data.graficoMedicamentos.valores, '#1b4332');
+            // Poblar Auditoría
+            const tbAuditoria = document.getElementById('tabla-auditoria');
+            data.auditoria.forEach(a => {
+                tbAuditoria.innerHTML += `
+                    <tr>
+                        <td>${a.prueba}</td>
+                        <td>${a.realizadas}</td>
+                        <td>${a.total}</td>
+                        <td>${a.estatus}</td>
+                        <td><strong>${a.color}</strong></td>
+                    </tr>
+                `;
+            });
 
-                mostrarTabla(); 
-            } else {
-                // Si el script de Google arroja un error, te lo mostrará en rojo para saber por qué
-                document.getElementById('loader').innerHTML = `<span style="color:red">Error: ${data.error}</span>`;
-            }
-        } catch (error) {
-            document.getElementById('loader').innerHTML = `<span style="color:red">Fallo de conexión con el Servidor.</span>`;
-        }
-    }
+            // Poblar Faltantes
+            const ulFaltantes = document.getElementById('lista-faltantes');
+            ulFaltantes.innerHTML += `<li><strong>Urgencia Legal (Aftosa/Rabia):</strong> IDs (${data.faltantes.urgenciaLegal.length > 0 ? data.faltantes.urgenciaLegal.join(', ') : 'Ninguno'})</li>`;
+            ulFaltantes.innerHTML += `<li><strong>Faltantes Brucelosis (Cepa 19/RB51):</strong> IDs (${data.faltantes.brucelosis.length > 0 ? data.faltantes.brucelosis.join(', ') : 'Ninguno'})</li>`;
+            ulFaltantes.innerHTML += `<li><strong>Faltantes Complejo Reproductivo:</strong> IDs (${data.faltantes.reproductivo.length > 0 ? data.faltantes.reproductivo.join(', ') : 'Ninguno'})</li>`;
+            ulFaltantes.innerHTML += `<li><strong>Faltantes Pruebas de Sangre:</strong> IDs (${data.faltantes.sangre.length > 0 ? data.faltantes.sangre.join(', ') : 'Ninguno'})</li>`;
 
-    function renderizarKPIs(contenedorId, kpiObjeto) {
-        const contenedor = document.getElementById(contenedorId);
-        contenedor.innerHTML = "";
-        Object.keys(kpiObjeto).forEach(key => {
-            const kpi = kpiObjeto[key];
-            const isAlerta = kpi.porcentaje < 80;
-            contenedor.innerHTML += `
-                <div class="kpi-card ${isAlerta ? 'alerta' : ''}">
-                    <span class="kpi-val" style="color: ${isAlerta ? '#d90429' : '#1b4332'}">${kpi.porcentaje}%</span>
-                    <span class="kpi-title">${kpi.nombre}</span>
-                    <span class="kpi-meta">${kpi.aplicados} de ${kpi.meta} animales</span>
-                </div>
+            // Poblar Incidencia (Porcentajes basados en conteos de registros)
+            let totIncidencias = data.graficos.incidencias.rabia + data.graficos.incidencias.parasitismo + data.graficos.incidencias.otras;
+            if (totIncidencias === 0) totIncidencias = 1; // Evitar división por cero
+
+            document.getElementById('lista-incidencia').innerHTML = `
+                <li>Rabia / Sospecha: ${Math.round((data.graficos.incidencias.rabia / totIncidencias) * 100)}% (${data.graficos.incidencias.rabia} casos)</li>
+                <li>Parasitismo Gastrointestinal/Externo: ${Math.round((data.graficos.incidencias.parasitismo / totIncidencias) * 100)}% (${data.graficos.incidencias.parasitismo} casos)</li>
+                <li>Otras Patologías (Podal/Mastitis/Etc): ${Math.round((data.graficos.incidencias.otras / totIncidencias) * 100)}% (${data.graficos.incidencias.otras} casos)</li>
             `;
-        });
-    }
 
-    function renderizarGrafico(canvasId, label, labelsData, dataValues, color) {
-        new Chart(document.getElementById(canvasId), {
-            type: 'bar',
-            data: {
-                labels: labelsData,
-                datasets: [{ label: label, data: dataValues, backgroundColor: color }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
-            }
-        });
-    }
+            // Poblar Medicamentos
+            let totMeds = data.graficos.usoMeds.desparasitantes + data.graficos.usoMeds.vacunas + data.graficos.usoMeds.antibioticos;
+            if (totMeds === 0) totMeds = 1; // Evitar división por cero
 
-    function mostrarTabla() {
-        const seleccion = document.getElementById('selector-kpi').value;
-        const animales = datosFaltantes[seleccion] || [];
-        const tbody = document.getElementById('tbody-faltantes');
-        
-        if (animales.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green; font-weight:bold;">✅ Todos los animales de esta categoría están al día.</td></tr>`;
-            return;
+            document.getElementById('lista-medicamentos').innerHTML = `
+                <li>Desparasitantes: ${Math.round((data.graficos.usoMeds.desparasitantes / totMeds) * 100)}% de los registros</li>
+                <li>Vacunas (Biológicos): ${Math.round((data.graficos.usoMeds.vacunas / totMeds) * 100)}% de los registros</li>
+                <li>Antibióticos/Vitaminas: ${Math.round((data.graficos.usoMeds.antibioticos / totMeds) * 100)}% de los registros</li>
+            `;
+
+            // Mostrar contenido y ocultar loader
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+        } catch (error) {
+            document.getElementById('loader').innerHTML = `<span style="color:var(--rojo)">Error de conexión o procesamiento: ${error.message}</span>`;
         }
-
-        tbody.innerHTML = animales.map(a => `
-            <tr>
-                <td><code>${a.id}</code></td>
-                <td><strong>${a.numero_practico}</strong></td>
-                <td><span class="badge">${a.clasificacion}</span></td>
-                <td style="color:red; font-weight:bold;">Pendiente</td>
-            </tr>
-        `).join('');
     }
 
-    window.onload = cargarDatos;
+    // Iniciar carga al abrir la página
+    document.addEventListener("DOMContentLoaded", cargarDatos);
 </script>
 </body>
 </html>
