@@ -3,209 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PYSIGA | Dashboard Sanitario</title>
+    <title>PYSIGA | Tablero Sanitario Avanzado</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --p: #1b4332; --s: #2d6a4f; --r: #d90429; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; color: #333; }
-        header { background: var(--p); color: white; padding: 15px 20px; text-align: center; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        :root { --verde: #1b4332; --verde-claro: #2d6a4f; --rojo: #d90429; --gris: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gris); margin: 0; padding: 15px; color: #333; }
+        h1, h2, h3 { color: var(--verde); margin-top: 0; }
         
-        /* Grid de 11 KPIs */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-top: 4px solid var(--s); }
-        .kpi-val { font-size: 1.8rem; font-weight: bold; color: var(--p); display: block; margin-bottom: 5px; }
-        .kpi-label { font-size: 0.8rem; color: #555; font-weight: bold; text-transform: uppercase; }
-        .kpi-meta { font-size: 0.75rem; color: #888; display: block; margin-top: 5px; }
+        /* Grid de KPIs */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 15px 10px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid var(--verde-claro); }
+        .kpi-card.alerta { border-bottom-color: var(--rojo); }
+        .kpi-val { font-size: 1.8rem; font-weight: bold; display: block; margin-bottom: 5px; }
+        .kpi-title { font-size: 0.75rem; text-transform: uppercase; color: #555; }
+        .kpi-meta { font-size: 0.7rem; color: #888; display: block; margin-top: 5px; }
 
         /* Gráficos Responsivos */
-        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .chart-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .chart-wrapper { position: relative; height: 35vh; width: 100%; }
+        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .chart-wrapper { position: relative; height: 300px; width: 100%; }
 
-        /* Selector y Tablas */
-        .table-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 40px; }
-        select { width: 100%; padding: 12px; font-size: 1rem; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #e9ecef; color: var(--p); position: sticky; top: 0; }
-        .prioridad { color: var(--r); font-weight: bold; }
-
-        /* Loader */
-        #loader { text-align: center; padding: 50px; font-size: 1.2rem; color: var(--p); }
+        /* Tabla y Selector */
+        .table-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+        select { padding: 10px; font-size: 1rem; width: 100%; max-width: 400px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { background: var(--verde); color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
+        .badge { background: #e9ecef; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        
+        #loader { text-align: center; padding: 50px; font-size: 1.2rem; font-weight: bold; color: var(--verde); }
+        #dashboard { display: none; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1 style="margin:0; font-size: 1.5rem;">📊 TABLERO DE CONTROL SANITARIO</h1>
-</header>
-
-<div class="container">
-    <div id="loader">Cargando indicadores y calculando poblaciones meta... 🐄</div>
+    <h2 style="text-align: center;">🛡️ Tablero de Control Sanitario</h2>
     
-    <div id="dashboard" style="display: none;">
-        
-        <h2 style="font-size: 1.2rem; color: var(--p); border-bottom: 2px solid var(--s); padding-bottom: 5px;">Indicadores de Cobertura</h2>
-        <div class="kpi-grid" id="kpi-container">
-            </div>
+    <div id="loader">🐄 Cargando y calculando indicadores...</div>
 
-        <h2 style="font-size: 1.2rem; color: var(--p); border-bottom: 2px solid var(--s); padding-bottom: 5px;">Análisis de Insumos y Tiempos</h2>
+    <div id="dashboard">
+        <h3>💉 Cobertura de Vacunación</h3>
+        <div class="kpi-grid" id="kpi-vacunas"></div>
+
+        <h3>🔬 Pruebas y Control Parasitario</h3>
+        <div class="kpi-grid" id="kpi-pruebas"></div>
+
         <div class="charts-container">
-            <div class="chart-box">
-                <h3 style="margin-top:0; font-size:1rem; text-align:center;">Uso de Medicamentos (Barras)</h3>
-                <div class="chart-wrapper">
-                    <canvas id="chartMed"></canvas>
-                </div>
+            <div class="chart-card">
+                <h3>Ocurrencia de Actividades por Mes</h3>
+                <div class="chart-wrapper"><canvas id="chartMeses"></canvas></div>
             </div>
-            <div class="chart-box">
-                <h3 style="margin-top:0; font-size:1rem; text-align:center;">Ocurrencia de Actividades por Mes</h3>
-                <div class="chart-wrapper">
-                    <canvas id="chartMes"></canvas>
-                </div>
+            <div class="chart-card">
+                <h3>Uso de Insumos / Medicamentos</h3>
+                <div class="chart-wrapper"><canvas id="chartMedicamentos"></canvas></div>
             </div>
         </div>
 
-        <h2 style="font-size: 1.2rem; color: var(--p); border-bottom: 2px solid var(--s); padding-bottom: 5px;">Auditoría de Animales Faltantes</h2>
-        <div class="table-section">
-            <select id="selectorFaltantes" onchange="mostrarTabla()"></select>
-            <div style="overflow-x: auto; max-height: 400px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID Animal</th>
-                            <th>Nro Práctico</th>
-                            <th>Clasificación</th>
-                            <th>Estatus</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-body"></tbody>
-                </table>
-            </div>
-        </div>
+        <div class="table-card">
+            <h3>🚨 Listado de Animales Faltantes</h3>
+            <label for="selector-kpi"><strong>Seleccione la actividad para ver los animales que faltan:</strong></label>
+            <br>
+            <select id="selector-kpi" onchange="mostrarTabla()">
+                <option value="aftosa">Vacuna Aftosa</option>
+                <option value="cepa19">Vacuna Cepa 19 (Brucelosis)</option>
+                <option value="rabia">Vacuna Rabia</option>
+                <option value="leptospira">Vacuna Leptospira</option>
+                <option value="clostridios">Vacuna Clostridios</option>
+                <option value="desparasitacion">Desparasitación</option>
+                <option value="prueba_brucelosis">Prueba de Brucelosis (Sangre)</option>
+                <option value="prueba_tuberculosis">Prueba de Tuberculosis</option>
+                <option value="prueba_mastitis">Prueba de Mastitis (CMT)</option>
+                <option value="prueba_sangre">Prueba de Sangre (Hemoparásitos)</option>
+                <option value="prueba_heces">Prueba de Heces (Coprología)</option>
+            </select>
 
+            <table id="tabla-faltantes">
+                <thead>
+                    <tr>
+                        <th>ID / Chip</th>
+                        <th>Nro Práctico</th>
+                        <th>Clasificación</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-faltantes"></tbody>
+            </table>
+        </div>
     </div>
-</div>
 
 <script>
-    let datosGlobales = {};
+    let datosFaltantes = {};
 
-    async function loadData() {
-        const url = "https://pysiga.d-alexjose.workers.dev"; 
-        const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('email');
-        
-        if (!email) {
-            document.getElementById('loader').innerText = "Error: Correo no proporcionado.";
-            return;
-        }
+    async function cargarDatos() {
+        const url = "https://pysiga.d-alexjose.workers.dev";
+        const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('email') || "alexdugarte@yahoo.com";
 
         try {
-            const response = await fetch(url, {
+            const res = await fetch(url, {
                 method: 'POST',
-                headers: { "Content-Type": "application/json" },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ accion: "reporteSanitario", email: email })
             });
-            const data = await response.json();
+            const data = await res.json();
 
             if (data.ok) {
-                datosGlobales = data;
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
 
-                renderKPIs(data.kpis);
-                renderCharts(data.graficoMedicamentos, data.graficoActividades);
-                setupSelector(data.faltantes);
+                datosFaltantes = data.faltantesDetalle; // Guardar listas para el dropdown
+                
+                renderizarKPIs('kpi-vacunas', data.kpis.vacunas);
+                renderizarKPIs('kpi-pruebas', data.kpis.pruebas);
+
+                renderizarGrafico('chartMeses', 'Actividades', data.graficoActividades.labels, data.graficoActividades.valores, '#2d6a4f');
+                renderizarGrafico('chartMedicamentos', 'Uso (Cant.)', data.graficoMedicamentos.labels, data.graficoMedicamentos.valores, '#1b4332');
+
+                mostrarTabla(); // Renderiza la tabla inicial
             } else {
-                document.getElementById('loader').innerText = "Error del servidor: " + data.error;
+                document.getElementById('loader').innerText = "Error: " + data.error;
             }
-        } catch (e) {
-            document.getElementById('loader').innerText = "Error de conexión: " + e.message;
+        } catch (error) {
+            document.getElementById('loader').innerText = "Error de conexión.";
         }
     }
 
-    function renderKPIs(kpis) {
-        const container = document.getElementById('kpi-container');
-        container.innerHTML = kpis.map(k => `
-            <div class="kpi-card">
-                <span class="kpi-val ${k.pct < 80 ? 'prioridad' : ''}">${k.pct}%</span>
-                <span class="kpi-label">${k.nombre}</span>
-                <span class="kpi-meta">Población Meta: ${k.meta}</span>
-            </div>
-        `).join('');
-    }
-
-    function renderCharts(meds, meses) {
-        // Gráfico de Medicamentos (Forzado a BARRAS)
-        new Chart(document.getElementById('chartMed'), {
-            type: 'bar',
-            data: {
-                labels: meds.labels,
-                datasets: [{ 
-                    label: 'Dosis / Aplicaciones', 
-                    data: meds.valores, 
-                    backgroundColor: '#2d6a4f',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
-            }
-        });
-
-        // Gráfico de Meses (BARRAS)
-        new Chart(document.getElementById('chartMes'), {
-            type: 'bar',
-            data: {
-                labels: meses.labels,
-                datasets: [{ 
-                    label: 'Tratamientos Realizados', 
-                    data: meses.valores, 
-                    backgroundColor: '#1b4332',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
-            }
+    function renderizarKPIs(contenedorId, kpiObjeto) {
+        const contenedor = document.getElementById(contenedorId);
+        contenedor.innerHTML = "";
+        Object.keys(kpiObjeto).forEach(key => {
+            const kpi = kpiObjeto[key];
+            const isAlerta = kpi.porcentaje < 80;
+            contenedor.innerHTML += `
+                <div class="kpi-card ${isAlerta ? 'alerta' : ''}">
+                    <span class="kpi-val" style="color: ${isAlerta ? '#d90429' : '#1b4332'}">${kpi.porcentaje}%</span>
+                    <span class="kpi-title">${kpi.nombre}</span>
+                    <span class="kpi-meta">${kpi.aplicados} de ${kpi.meta} animales</span>
+                </div>
+            `;
         });
     }
 
-    function setupSelector(faltantes) {
-        const selector = document.getElementById('selectorFaltantes');
-        Object.keys(faltantes).forEach(k => {
-            const opt = document.createElement('option');
-            opt.value = k;
-            opt.text = `Pendientes por: ${faltantes[k].nombre} (${faltantes[k].lista.length} animales)`;
-            selector.appendChild(opt);
+    // 🔥 TODOS LOS GRÁFICOS AHORA SON DE BARRAS ("bar") Y RESPONSIVOS
+    function renderizarGrafico(canvasId, label, labelsData, dataValues, color) {
+        new Chart(document.getElementById(canvasId), {
+            type: 'bar',
+            data: {
+                labels: labelsData,
+                datasets: [{ label: label, data: dataValues, backgroundColor: color }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // Vital para ajustarse a móviles
+                scales: { y: { beginAtZero: true } }
+            }
         });
-        mostrarTabla(); // Cargar la primera por defecto
     }
 
     function mostrarTabla() {
-        const key = document.getElementById('selectorFaltantes').value;
-        const lista = datosGlobales.faltantes[key].lista;
-        const tbody = document.getElementById('tabla-body');
+        const seleccion = document.getElementById('selector-kpi').value;
+        const animales = datosFaltantes[seleccion] || [];
+        const tbody = document.getElementById('tbody-faltantes');
         
-        if (lista.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green; font-weight:bold;">¡Felicidades! 100% de cobertura en esta categoría.</td></tr>`;
+        if (animales.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green;">✅ Todos los animales de esta categoría están al día.</td></tr>`;
             return;
         }
 
-        tbody.innerHTML = lista.map(a => `
+        tbody.innerHTML = animales.map(a => `
             <tr>
                 <td><code>${a.id}</code></td>
-                <td><strong>${a.num}</strong></td>
-                <td>${a.clasif}</td>
-                <td class="prioridad">Requiere Atención</td>
+                <td><strong>${a.numero_practico}</strong></td>
+                <td><span class="badge">${a.clasificacion}</span></td>
+                <td style="color:red; font-weight:bold;">Pendiente</td>
             </tr>
         `).join('');
     }
 
-    window.onload = loadData;
+    window.onload = cargarDatos;
 </script>
 </body>
 </html>
