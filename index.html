@@ -108,27 +108,40 @@
     </div>
 
 <script>
+    // Extraer el email al inicio para que esté disponible globalmente
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+
     let datosFaltantes = {};
     let rawKPIs = {};
     let listaMedicamentos = [];
     let chartKpiInstance = null;
     let chartMedInstance = null;
 
+    // --- NUEVA LÓGICA DE CIERRE ---
     function cerrarPantalla() {
-        if (window.AppInventor) {
-            window.AppInventor.setWebViewString("CERRAR");
-        } else if (window.parent) {
-            window.parent.postMessage("CERRAR", "*");
+        // Si se abrió como popup/nueva pestaña
+        if (window.opener) { 
+            window.close(); 
+            return; 
         }
-        window.close();
+        
+        // Si no hay email, redirige a la raíz por seguridad
+        if (!email) {
+            window.location.href = "/";
+            return;
+        }
+
+        // Si está en la misma ventana, redirige al menú principal conservando la sesión
+        const emailParam = encodeURIComponent(email);
+        window.location.href = `https://sites.google.com/view/tu-sitio-pysiga?email=${emailParam}`;
     }
 
     async function cargarDatos() {
         const url = "https://pysiga.d-alexjose.workers.dev";
-        const email = new URLSearchParams(window.location.search).get('email');
 
         if (!email) {
-            document.getElementById('loader').innerHTML = `<span style="color:red">⚠️ No se proporcionó correo en la URL.</span>`;
+            document.getElementById('loader').innerHTML = `<span style="color:red">⚠️ No se proporcionó correo en la URL. Por favor, ingrese desde la aplicación principal.</span>`;
             return; 
         }
 
@@ -160,7 +173,7 @@
                 document.getElementById('loader').innerHTML = `<span style="color:red">Error: ${data.error}</span>`;
             }
         } catch (error) {
-            document.getElementById('loader').innerHTML = `<span style="color:red">Fallo de conexión.</span>`;
+            document.getElementById('loader').innerHTML = `<span style="color:red">Fallo de conexión con el servidor. Revisa tu internet o la configuración CORS del Worker.</span>`;
         }
     }
 
