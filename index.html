@@ -27,7 +27,7 @@
         .chart-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .chart-wrapper { position: relative; height: 300px; width: 100%; margin-top: 15px; }
 
-        .table-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+        .table-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px;}
         select { padding: 10px; font-size: 1rem; width: 100%; max-width: 400px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; }
         th { background: var(--verde); color: white; padding: 10px; text-align: left; }
@@ -49,7 +49,7 @@
 <body>
 
     <div class="header-container">
-        <h2 style="margin: 0;">REPORTE SANITARIO (ALARMAS)</h2>
+        <h2 style="margin: 0;">REPORTE SANITARIO Y MÉDICO</h2>
         <div class="btn-group">
             <button onclick="window.print()" class="btn btn-print">🖨️ Imprimir</button>
             <button onclick="cerrarPantalla()" class="btn btn-close">❌ Cerrar</button>
@@ -67,6 +67,9 @@
 
         <h3>Pruebas Diagnósticas (Vencen a los 6 meses)</h3>
         <div class="kpi-grid" id="kpi-pruebas"></div>
+
+        <h3>Tratamientos Especiales / Reproductivos</h3>
+        <div class="kpi-grid" id="kpi-especiales"></div>
 
         <div class="charts-container">
             <div class="chart-card">
@@ -105,10 +108,27 @@
                 <tbody id="tbody-faltantes"></tbody>
             </table>
         </div>
+
+        <div class="table-card">
+            <h3>Detalle de Medicamentos Extraídos de Palpaciones</h3>
+            <table id="tabla-palpaciones">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Animal</th>
+                        <th>Lote</th>
+                        <th>Producto / Medicina</th>
+                        <th>Dosis</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-palpaciones"></tbody>
+            </table>
+        </div>
+
     </div>
 
 <script>
-    // Extraer el email al inicio para que esté disponible globalmente
     const urlParams = new URLSearchParams(window.location.search);
     const email = urlParams.get('email');
 
@@ -118,21 +138,15 @@
     let chartKpiInstance = null;
     let chartMedInstance = null;
 
-    // --- NUEVA LÓGICA DE CIERRE ---
     function cerrarPantalla() {
-        // Si se abrió como popup/nueva pestaña
         if (window.opener) { 
             window.close(); 
             return; 
         }
-        
-        // Si no hay email, redirige a la raíz por seguridad
         if (!email) {
             window.location.href = "/";
             return;
         }
-
-        // Si está en la misma ventana, redirige al menú principal conservando la sesión
         const emailParam = encodeURIComponent(email);
         window.location.href = `https://sites.google.com/view/tu-sitio-pysiga?email=${emailParam}`;
     }
@@ -158,17 +172,34 @@
                 document.getElementById('dashboard').style.display = 'block';
 
                 datosFaltantes = data.faltantesDetalle;
-                rawKPIs = { ...data.kpis.vacunas, ...data.kpis.pruebas, ...data.kpis.desparasitacion };
+                
+                // Unimos todos los KPIs incluyendo los tratamientos_especiales
+                rawKPIs = { 
+                    ...data.kpis.vacunas, 
+                    ...data.kpis.pruebas, 
+                    ...data.kpis.desparasitacion,
+                    ...data.kpis.tratamientos_especiales // <-- Añadido
+                };
+                
                 listaMedicamentos = data.graficoMedicamentosRaw;
                 
                 renderizarKPIs('kpi-vacunas', data.kpis.vacunas);
                 renderizarKPIs('kpi-desparasitacion', data.kpis.desparasitacion);
                 renderizarKPIs('kpi-pruebas', data.kpis.pruebas);
+                
+                // Si existe el KPI de tratamientos especiales, lo mostramos
+                if (data.kpis.tratamientos_especiales) {
+                    renderizarKPIs('kpi-especiales', data.kpis.tratamientos_especiales);
+                }
 
                 poblarSelectores();
                 renderizarGraficoKPI();
                 renderizarGraficoMedicamentos();
                 mostrarTabla(); 
+                
+                // Mostrar la nueva tabla de palpaciones
+                mostrarTablaPalpaciones(data.tratamientosExtraidosPalpaciones);
+
             } else {
                 document.getElementById('loader').innerHTML = `<span style="color:red">Error: ${data.error}</span>`;
             }
@@ -232,17 +263,15 @@
         const rango = document.getElementById('time-chart-select').value;
         const now = new Date();
         
-        // Filtrar por fechas
         const filtrados = listaMedicamentos.filter(m => {
             if (!m.fecha) return false;
             const diffDays = (now - new Date(m.fecha)) / (1000 * 3600 * 24);
             if (rango === '1m') return diffDays <= 30;
             if (rango === '6m') return diffDays <= 180;
             if (rango === '1y') return diffDays <= 365;
-            return true; // "all"
+            return true; 
         });
 
-        // Contar uso
         const conteo = {};
         filtrados.forEach(m => { conteo[m.medicamento] = (conteo[m.medicamento] || 0) + 1; });
 
@@ -274,6 +303,30 @@
                 <td><strong>${a.numero_practico}</strong></td>
                 <td><span class="badge">${a.clasificacion}</span></td>
                 <td style="color:red; font-weight:bold;">Vencido/Faltante</td>
+            </tr>
+        `).join('');
+    }
+
+    // --- NUEVA FUNCIÓN PARA MOSTRAR LA TABLA DE PALPACIONES ---
+    function mostrarTablaPalpaciones(tratamientos) {
+        const tbody = document.getElementById('tbody-palpaciones');
+        
+        if (!tratamientos || tratamientos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#555;">No hay registros de medicación en las palpaciones.</td></tr>`;
+            return;
+        }
+
+        // Ordenar por fecha (más reciente primero)
+        tratamientos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+        tbody.innerHTML = tratamientos.map(t => `
+            <tr>
+                <td>${t.fecha}</td>
+                <td><strong>Nro: ${t.numero_practico}</strong><br><span style="font-size:0.75rem; color:#888;">${t.id}</span></td>
+                <td><span class="badge">${t.lote}</span></td>
+                <td style="color: var(--verde-claro); font-weight:bold;">${t.medicamento.toUpperCase()}</td>
+                <td>${t.dosis} ${t.unidad}</td>
+                <td>${t.observaciones}</td>
             </tr>
         `).join('');
     }
