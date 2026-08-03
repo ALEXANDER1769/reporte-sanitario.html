@@ -98,98 +98,6 @@
         }
     </style>
 </head>
-<!-- ESTO DIBUJA EL GRAFICO Y LA TABLA DE PRUEBAS AL FINAL DE TU PAGINA -->
-<div class="card" style="margin-top: 20px; padding: 20px;">
-    <h3 style="color: #0984e3; text-align: center;">🔬 RESULTADOS DE PRUEBAS DE CAMPO</h3>
-    <canvas id="graficoPruebasCanvas"></canvas>
-</div>
-
-<div class="card" style="margin-top: 20px; padding: 20px;">
-    <h3 style="color: #d63031; text-align: center;">⚠️ ANIMALES POSITIVOS / REACTIVOS</h3>
-    <div style="text-align: center; margin-bottom: 15px;">
-        <label>Seleccione la prueba:</label>
-        <select id="selectorPruebasPositivas" style="padding: 5px; border-radius: 5px; margin-left: 10px;">
-            <option value="">-- Seleccione --</option>
-        </select>
-    </div>
-    <table style="width: 100%; border-collapse: collapse; text-align: center;">
-        <thead>
-            <tr style="background-color: #d63031; color: white;">
-                <th style="padding: 10px; border: 1px solid #ddd;">NRO PRÁCTICO</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">LOTE</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">FECHA PRUEBA</th>
-            </tr>
-        </thead>
-        <tbody id="tablaPositivosBody"></tbody>
-    </table>
-</div>
-
-<script>
-// ESTO LE DA VIDA A LOS GRAFICOS
-setTimeout(() => {
-    // Tomamos los datos de las pruebas que mandó el Worker
-    const pruebasRaw = window.datosGlobalesWorker ? window.datosGlobalesWorker.pruebasRealizadasRaw : [];
-    if (!pruebasRaw || pruebasRaw.length === 0) return;
-
-    const conteoPruebas = {};
-    const tiposPruebasUnicas = new Set();
-
-    pruebasRaw.forEach(p => {
-        const act = p.actividad;
-        const res = p.resultado === "POSITIVO" ? "Positivo" : "Negativo/Otro";
-        tiposPruebasUnicas.add(act);
-        if(!conteoPruebas[act]) conteoPruebas[act] = { "Positivo": 0, "Negativo/Otro": 0 };
-        conteoPruebas[act][res]++;
-    });
-
-    // Llenamos el selector
-    const selectorPruebas = document.getElementById('selectorPruebasPositivas');
-    tiposPruebasUnicas.forEach(prueba => {
-        const option = document.createElement('option');
-        option.value = prueba;
-        option.textContent = prueba;
-        selectorPruebas.appendChild(option);
-    });
-
-    // Dibujamos el gráfico
-    const ctx = document.getElementById('graficoPruebasCanvas').getContext('2d');
-    const labels = Array.from(tiposPruebasUnicas);
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                { label: 'Positivos', data: labels.map(l => conteoPruebas[l]["Positivo"]), backgroundColor: '#d63031' },
-                { label: 'Negativos/Otros', data: labels.map(l => conteoPruebas[l]["Negativo/Otro"]), backgroundColor: '#00b894' }
-            ]
-        },
-        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
-    });
-
-    // Hacemos que la tabla cambie al seleccionar
-    selectorPruebas.addEventListener('change', function() {
-        const pruebaSelec = this.value;
-        const tbody = document.getElementById('tablaPositivosBody');
-        tbody.innerHTML = "";
-        if(!pruebaSelec) return;
-
-        const positivos = pruebasRaw.filter(p => p.actividad === pruebaSelec && p.resultado === "POSITIVO");
-        
-        if (positivos.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='3' style='padding:15px; color: green;'>✅ No hay casos positivos.</td></tr>";
-            return;
-        }
-
-        positivos.forEach(animal => {
-            tbody.innerHTML += `<tr>
-                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${animal.numero_practico}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${animal.lote}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${animal.fecha}</td>
-            </tr>`;
-        });
-    });
-}, 2500); // Esperamos un par de segundos a que carguen los datos
-</script>
 <body>
 
 <div class="container">
@@ -229,119 +137,6 @@ setTimeout(() => {
 
             <div class="card" style="border-top-color: var(--morado);">
                 <div class="card-title-container"><div class="card-title" style="color: var(--morado); border-color: #a29bfe;">📦 Historial de Uso de Medicamentos</div></div>
- <!-- INICIO: BLOQUE DE PRUEBAS DE CAMPO -->
-<div class="row" style="margin-top: 20px; width: 100%;">
-    <!-- Gráfico -->
-    <div class="col-md-6">
-        <div class="card" style="padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-            <h4 style="color: #0984e3; text-align: center; font-weight: bold;">🔬 RESULTADOS DE PRUEBAS DE CAMPO</h4>
-            <canvas id="graficoPruebasCanvas"></canvas>
-        </div>
-    </div>
-    
-    <!-- Tabla de Positivos -->
-    <div class="col-md-6">
-        <div class="card" style="padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-            <h4 style="color: #d63031; text-align: center; font-weight: bold;">⚠️ ANIMALES POSITIVOS / REACTIVOS</h4>
-            
-            <div style="text-align: center; margin-bottom: 15px;">
-                <label style="font-weight: bold;">Seleccione la prueba:</label>
-                <select id="selectorPruebasPositivas" class="form-control" style="display: inline-block; width: 60%; margin-left: 10px;">
-                    <option value="">-- Seleccione --</option>
-                </select>
-            </div>
-            
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered" style="text-align: center; width: 100%;">
-                    <thead style="background-color: #0984e3; color: white;">
-                        <tr>
-                            <th>ID ANIMAL</th>
-                            <th>NRO PRÁCTICO</th>
-                            <th>LOTE</th>
-                            <th>FECHA PRUEBA</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaPositivosBody">
-                        <tr><td colspan="4">Seleccione una prueba para ver resultados.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- FIN: BLOQUE DE PRUEBAS DE CAMPO -->
-
-<script>
-setTimeout(() => {
-    // Motor de Pruebas y Positivos
-    const pruebasRaw = window.datosGlobalesWorker ? window.datosGlobalesWorker.pruebasRealizadasRaw : [];
-    
-    if (pruebasRaw && pruebasRaw.length > 0) {
-        const conteoPruebas = {};
-        const tiposPruebasUnicas = new Set();
-
-        pruebasRaw.forEach(p => {
-            const act = p.actividad;
-            const res = p.resultado === "POSITIVO" ? "Positivo" : "Negativo/Otro";
-            tiposPruebasUnicas.add(act);
-            if(!conteoPruebas[act]) conteoPruebas[act] = { "Positivo": 0, "Negativo/Otro": 0 };
-            conteoPruebas[act][res]++;
-        });
-
-        const selectorPruebas = document.getElementById('selectorPruebasPositivas');
-        tiposPruebasUnicas.forEach(prueba => {
-            const option = document.createElement('option');
-            option.value = prueba;
-            option.textContent = prueba;
-            selectorPruebas.appendChild(option);
-        });
-
-        const ctxPruebas = document.getElementById('graficoPruebasCanvas').getContext('2d');
-        const labelsPruebas = Array.from(tiposPruebasUnicas);
-        
-        new Chart(ctxPruebas, {
-            type: 'bar',
-            data: {
-                labels: labelsPruebas,
-                datasets: [
-                    { label: 'Positivos / Reactivos', data: labelsPruebas.map(l => conteoPruebas[l]["Positivo"]), backgroundColor: '#d63031' },
-                    { label: 'Negativos / En Proceso', data: labelsPruebas.map(l => conteoPruebas[l]["Negativo/Otro"]), backgroundColor: '#00b894' }
-                ]
-            },
-            options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
-        });
-
-        selectorPruebas.addEventListener('change', function() {
-            const pruebaSelec = this.value;
-            const tbody = document.getElementById('tablaPositivosBody');
-            tbody.innerHTML = ""; 
-            
-            if(!pruebaSelec) {
-                tbody.innerHTML = "<tr><td colspan='4'>Seleccione una prueba para ver resultados.</td></tr>";
-                return;
-            }
-
-            const positivos = pruebasRaw.filter(p => p.actividad === pruebaSelec && p.resultado === "POSITIVO");
-            
-            if (positivos.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4' style='color: green; font-weight:bold;'>✅ No hay animales positivos registrados.</td></tr>";
-                return;
-            }
-
-            positivos.forEach(animal => {
-                const fila = document.createElement('tr');
-                fila.innerHTML = `
-                    <td style="color: #555; font-size: 0.9em;">${animal.id_animal}</td>
-                    <td style="font-weight: bold; color: #d63031;">${animal.numero_practico}</td>
-                    <td>${animal.lote}</td>
-                    <td>${animal.fecha}</td>
-                `;
-                tbody.appendChild(fila);
-            });
-        });
-    }
-}, 2500); 
-</script>
                 <select id="time-chart-select" onchange="renderizarGraficoMedicamentos()">
                     <option value="all">Histórico Completo (Todo el registro)</option>
                     <option value="1y">Último Año (12 meses)</option>
@@ -349,6 +144,37 @@ setTimeout(() => {
                     <option value="1m">Último Mes (30 días)</option>
                 </select>
                 <div class="chart-container"><canvas id="chartMedicamentos"></canvas></div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: PRUEBAS DE CAMPO Y ANIMALES POSITIVOS -->
+        <div class="charts-container">
+            <div class="card" style="border-top-color: var(--azul);">
+                <div class="card-title-container"><div class="card-title" style="color: var(--azul); border-color: var(--azul-claro);">🔬 Resultados de Pruebas de Campo</div></div>
+                <div class="chart-container"><canvas id="graficoPruebasCanvas"></canvas></div>
+            </div>
+
+            <div class="card" style="border-top-color: var(--rojo);">
+                <div class="card-title-container"><div class="card-title" style="color: var(--rojo); border-color: var(--rojo-claro);">⚠️ Animales Positivos / Reactivos</div></div>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <label for="selectorPruebasPositivas" style="font-weight: 700; color: var(--gris); font-size: 14px;">Seleccione la prueba:</label>
+                    <select id="selectorPruebasPositivas" style="max-width: 400px; display: inline-block; margin-left: 10px;"></select>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr style="background: var(--rojo);">
+                                <th>ID Animal</th>
+                                <th>Nro Práctico</th>
+                                <th>Lote</th>
+                                <th>Fecha Prueba</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaPositivosBody">
+                            <tr><td colspan="4">Seleccione una prueba para ver resultados.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -394,7 +220,7 @@ setTimeout(() => {
       beforeDatasetsDraw: function(chart) {
         const ctx = chart.ctx;
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)'; // Sombra oscura
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
         ctx.shadowBlur = 10; 
         ctx.shadowOffsetX = 4; 
         ctx.shadowOffsetY = 4; 
@@ -413,6 +239,7 @@ setTimeout(() => {
     let listaMedicamentos = [];
     let chartKpiInstance = null;
     let chartMedInstance = null;
+    let chartPruebasInstance = null;
 
     // Paleta de colores vivos
     const coloresMedicamentos = ['#0984e3', '#00b894', '#fdcb6e', '#6c5ce7', '#e17055', '#d63031', '#00cec9', '#2d3436'];
@@ -476,6 +303,10 @@ setTimeout(() => {
                 renderizarGraficoMedicamentos();
                 mostrarTabla(); 
                 
+                if (data.pruebasRealizadasRaw) {
+                    renderizarPruebasDeCampo(data.pruebasRealizadasRaw);
+                }
+                
                 mostrarTablaPalpaciones(data.tratamientosExtraidosPalpaciones);
 
             } else {
@@ -486,7 +317,6 @@ setTimeout(() => {
         }
     }
 
-    // Adaptación dinámica de las tarjetas KPI al nuevo diseño
     function renderizarKPIs(contenedorId, kpiObjeto) {
         const contenedor = document.getElementById(contenedorId);
         contenedor.innerHTML = "";
@@ -539,7 +369,7 @@ setTimeout(() => {
                 datasets: [{
                     label: 'Cantidad de Animales',
                     data: [data.aplicados, faltantes],
-                    backgroundColor: ['#00b894', '#d63031'], // Verde vivo y Rojo vivo
+                    backgroundColor: ['#00b894', '#d63031'],
                     borderWidth: 0,
                     borderRadius: 8
                 }]
@@ -598,6 +428,83 @@ setTimeout(() => {
                 }
             }
         });
+    }
+
+    function renderizarPruebasDeCampo(pruebasRaw) {
+        if (!pruebasRaw || pruebasRaw.length === 0) return;
+
+        const conteoPruebas = {};
+        const tiposPruebasUnicas = new Set();
+
+        pruebasRaw.forEach(p => {
+            const act = p.actividad;
+            const res = p.resultado === "POSITIVO" ? "Positivo" : "Negativo/Otro";
+            tiposPruebasUnicas.add(act);
+            if(!conteoPruebas[act]) conteoPruebas[act] = { "Positivo": 0, "Negativo/Otro": 0 };
+            conteoPruebas[act][res]++;
+        });
+
+        const selectorPruebas = document.getElementById('selectorPruebasPositivas');
+        selectorPruebas.innerHTML = '<option value="">-- Seleccione --</option>';
+        tiposPruebasUnicas.forEach(prueba => {
+            const option = document.createElement('option');
+            option.value = prueba;
+            option.textContent = prueba;
+            selectorPruebas.appendChild(option);
+        });
+
+        const ctxPruebas = document.getElementById('graficoPruebasCanvas').getContext('2d');
+        const labelsPruebas = Array.from(tiposPruebasUnicas);
+
+        if (chartPruebasInstance) chartPruebasInstance.destroy();
+
+        chartPruebasInstance = new Chart(ctxPruebas, {
+            type: 'bar',
+            data: {
+                labels: labelsPruebas,
+                datasets: [
+                    { label: 'Positivos / Reactivos', data: labelsPruebas.map(l => conteoPruebas[l]["Positivo"]), backgroundColor: '#d63031', borderRadius: 8 },
+                    { label: 'Negativos / En Proceso', data: labelsPruebas.map(l => conteoPruebas[l]["Negativo/Otro"]), backgroundColor: '#00b894', borderRadius: 8 }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: { 
+                    x: { stacked: true, ticks: { font: { weight: 'bold' } } }, 
+                    y: { stacked: true, ticks: { beginAtZero: true, font: { weight: 'bold' } } } 
+                } 
+            }
+        });
+
+        selectorPruebas.onchange = function() {
+            const pruebaSelec = this.value;
+            const tbody = document.getElementById('tablaPositivosBody');
+            tbody.innerHTML = ""; 
+            
+            if(!pruebaSelec) {
+                tbody.innerHTML = "<tr><td colspan='4'>Seleccione una prueba para ver resultados.</td></tr>";
+                return;
+            }
+
+            const positivos = pruebasRaw.filter(p => p.actividad === pruebaSelec && p.resultado === "POSITIVO");
+            
+            if (positivos.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' style='color: var(--verde); font-weight:bold; padding: 20px;'>✅ No hay animales positivos registrados.</td></tr>";
+                return;
+            }
+
+            positivos.forEach(animal => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td style="color: var(--gris); font-size: 0.9em;">${animal.id_animal || '-'}</td>
+                    <td style="font-weight: bold; color: var(--rojo); font-size: 15px;">${animal.numero_practico || 'S/N'}</td>
+                    <td><span class="badge badge-lote">${animal.lote || 'S/I'}</span></td>
+                    <td>${animal.fecha || '-'}</td>
+                `;
+                tbody.appendChild(fila);
+            });
+        };
     }
 
     function mostrarTabla() {
