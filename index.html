@@ -98,6 +98,98 @@
         }
     </style>
 </head>
+<!-- ESTO DIBUJA EL GRAFICO Y LA TABLA DE PRUEBAS AL FINAL DE TU PAGINA -->
+<div class="card" style="margin-top: 20px; padding: 20px;">
+    <h3 style="color: #0984e3; text-align: center;">🔬 RESULTADOS DE PRUEBAS DE CAMPO</h3>
+    <canvas id="graficoPruebasCanvas"></canvas>
+</div>
+
+<div class="card" style="margin-top: 20px; padding: 20px;">
+    <h3 style="color: #d63031; text-align: center;">⚠️ ANIMALES POSITIVOS / REACTIVOS</h3>
+    <div style="text-align: center; margin-bottom: 15px;">
+        <label>Seleccione la prueba:</label>
+        <select id="selectorPruebasPositivas" style="padding: 5px; border-radius: 5px; margin-left: 10px;">
+            <option value="">-- Seleccione --</option>
+        </select>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; text-align: center;">
+        <thead>
+            <tr style="background-color: #d63031; color: white;">
+                <th style="padding: 10px; border: 1px solid #ddd;">NRO PRÁCTICO</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">LOTE</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">FECHA PRUEBA</th>
+            </tr>
+        </thead>
+        <tbody id="tablaPositivosBody"></tbody>
+    </table>
+</div>
+
+<script>
+// ESTO LE DA VIDA A LOS GRAFICOS
+setTimeout(() => {
+    // Tomamos los datos de las pruebas que mandó el Worker
+    const pruebasRaw = window.datosGlobalesWorker ? window.datosGlobalesWorker.pruebasRealizadasRaw : [];
+    if (!pruebasRaw || pruebasRaw.length === 0) return;
+
+    const conteoPruebas = {};
+    const tiposPruebasUnicas = new Set();
+
+    pruebasRaw.forEach(p => {
+        const act = p.actividad;
+        const res = p.resultado === "POSITIVO" ? "Positivo" : "Negativo/Otro";
+        tiposPruebasUnicas.add(act);
+        if(!conteoPruebas[act]) conteoPruebas[act] = { "Positivo": 0, "Negativo/Otro": 0 };
+        conteoPruebas[act][res]++;
+    });
+
+    // Llenamos el selector
+    const selectorPruebas = document.getElementById('selectorPruebasPositivas');
+    tiposPruebasUnicas.forEach(prueba => {
+        const option = document.createElement('option');
+        option.value = prueba;
+        option.textContent = prueba;
+        selectorPruebas.appendChild(option);
+    });
+
+    // Dibujamos el gráfico
+    const ctx = document.getElementById('graficoPruebasCanvas').getContext('2d');
+    const labels = Array.from(tiposPruebasUnicas);
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Positivos', data: labels.map(l => conteoPruebas[l]["Positivo"]), backgroundColor: '#d63031' },
+                { label: 'Negativos/Otros', data: labels.map(l => conteoPruebas[l]["Negativo/Otro"]), backgroundColor: '#00b894' }
+            ]
+        },
+        options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+    });
+
+    // Hacemos que la tabla cambie al seleccionar
+    selectorPruebas.addEventListener('change', function() {
+        const pruebaSelec = this.value;
+        const tbody = document.getElementById('tablaPositivosBody');
+        tbody.innerHTML = "";
+        if(!pruebaSelec) return;
+
+        const positivos = pruebasRaw.filter(p => p.actividad === pruebaSelec && p.resultado === "POSITIVO");
+        
+        if (positivos.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='3' style='padding:15px; color: green;'>✅ No hay casos positivos.</td></tr>";
+            return;
+        }
+
+        positivos.forEach(animal => {
+            tbody.innerHTML += `<tr>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${animal.numero_practico}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${animal.lote}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${animal.fecha}</td>
+            </tr>`;
+        });
+    });
+}, 2500); // Esperamos un par de segundos a que carguen los datos
+</script>
 <body>
 
 <div class="container">
