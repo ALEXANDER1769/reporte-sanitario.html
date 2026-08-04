@@ -160,8 +160,10 @@
                     <label for="selectorPruebasPositivas" style="font-weight: 700; color: var(--gris); font-size: 14px;">Seleccione la prueba:</label>
                     <select id="selectorPruebasPositivas" style="max-width: 400px; display: inline-block; margin-left: 10px;"></select>
                 </div>
+                <button class="btn btn-secondary" style="margin-bottom: 10px; float: right;" onclick="imprimirTabla('tabla-positivos', 'Reporte de Animales Positivos / Reactivos')">🖨️ Imprimir esta Tabla</button>
+                <div style="clear: both;"></div>
                 <div class="table-container">
-                    <table>
+                    <table id="tabla-positivos">
                         <thead>
                             <tr style="background: var(--rojo);">
                                 <th>ID Animal</th>
@@ -213,6 +215,8 @@
             </div>
             <select id="selector-kpi" onchange="mostrarTabla()" style="max-width: 500px; display: block; margin: 0 auto 20px auto;"></select>
 
+          <button class="btn btn-secondary" style="margin-bottom: 10px; float: right;" onclick="imprimirTabla('tabla-faltantes', 'Reporte de Animales Vencidos o Faltantes')">🖨️ Imprimir esta Tabla</button>
+            <div style="clear: both;"></div>
             <div class="table-container">
                 <table id="tabla-faltantes">
                     <thead style="background: var(--rojo);">
@@ -226,6 +230,8 @@
         <div class="card" style="border-top-color: var(--azul);">
             <div class="card-title-container"><div class="card-title">📋 Registro de Fármacos Aplicados en Palpaciones</div></div>
             <p style="text-align: center; color: var(--gris); font-size: 14px; margin-bottom: 15px;">Medicamentos y tratamientos recetados directamente durante el proceso de palpación reproductiva.</p>
+           <button class="btn btn-secondary" style="margin-bottom: 10px; float: right;" onclick="imprimirTabla('tabla-palpaciones', 'Registro de Fármacos Aplicados en Palpaciones')">🖨️ Imprimir esta Tabla</button>
+            <div style="clear: both;"></div>
             <div class="table-container">
                 <table id="tabla-palpaciones">
                     <thead>
@@ -648,6 +654,32 @@
         }
     }
     // ==============================================
+    // ==============================================
+    // MOTOR PARA IMPRIMIR TABLAS INDIVIDUALES
+    // ==============================================
+    function imprimirTabla(idTabla, tituloTabla) {
+        const tabla = document.getElementById(idTabla);
+        if (!tabla) return;
+        
+        const ventana = window.open('', '', 'height=700,width=900');
+        ventana.document.write('<html><head><title>Imprimir Tabla</title>');
+        ventana.document.write('<style>');
+        ventana.document.write('body { font-family: sans-serif; padding: 20px; }');
+        ventana.document.write('h2 { text-align: center; color: #0984e3; text-transform: uppercase; }');
+        ventana.document.write('table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: center; font-size: 14px; }');
+        ventana.document.write('th, td { border: 1px solid #ddd; padding: 12px; }');
+        ventana.document.write('th { background-color: #0984e3; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }');
+        ventana.document.write('tr:nth-child(even) { background-color: #f2f2f2; }');
+        ventana.document.write('</style></head><body>');
+        ventana.document.write('<h2>' + tituloTabla + '</h2>');
+        ventana.document.write(tabla.outerHTML);
+        ventana.document.write('</body></html>');
+        
+        ventana.document.close();
+        ventana.focus();
+        setTimeout(() => { ventana.print(); ventana.close(); }, 500);
+    }
+   
     
     window.onload = cargarDatos;
 </script>
