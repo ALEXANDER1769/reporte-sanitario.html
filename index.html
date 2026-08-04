@@ -178,6 +178,34 @@
             </div>
         </div>
 
+        <!-- ============================================== -->
+        <!-- CAJA PARA PEGAR EXCEL DEL VETERINARIO -->
+        <!-- ============================================== -->
+        <div class="card" style="border-top-color: var(--amarillo);">
+            <div class="card-title-container"><div class="card-title" style="color: #e1b12c; border-color: #f6e58d;">📑 Carga Rápida de Resultados (Veterinario)</div></div>
+            <p style="text-align: center; color: var(--gris); font-size: 14px; margin-bottom: 15px;">
+                Seleccione la prueba y pegue desde Excel las dos columnas (<b>Nro de Tubo</b> y <b>Resultado</b>).
+            </p>
+            
+            <div style="text-align: center; margin-bottom: 15px;">
+                <select id="tipo-prueba-excel" style="max-width: 300px; display: inline-block; padding: 8px; border-radius: 5px; border: 2px solid #f6e58d;">
+                    <option value="">-- Seleccione la Prueba --</option>
+                    <option value="BRUCELOSIS">Prueba de Brucelosis</option>
+                    <option value="TUBERCULOSIS">Prueba de Tuberculosis</option>
+                    <option value="MASTITIS">Prueba de Mastitis</option>
+                    <option value="AFTOSA">Prueba de Aftosa</option>
+                </select>
+            </div>
+            
+            <textarea id="excel-paste-area" placeholder="Ejemplo:&#10;145    POSITIVO&#10;146    NEGATIVO&#10;147    POSITIVO" style="width: 100%; height: 120px; padding: 15px; border-radius: 8px; border: 2px dashed #e1b12c; background: #fffdf2; font-family: monospace; font-size: 14px; margin-bottom: 15px; resize: none;"></textarea>
+            
+            <button class="btn" style="background: #e1b12c; color: white; display: block; margin: 0 auto; font-size: 16px; padding: 12px 24px;" onclick="procesarExcelPruebas()">
+                ⚙️ Procesar Resultados y Actualizar
+            </button>
+            <p id="excel-status" style="text-align: center; margin-top: 15px; font-weight: bold; font-size: 15px;"></p>
+        </div>
+        <!-- ============================================== -->
+        
         <div class="card" style="border-top-color: var(--rojo);">
             <div class="card-title-container"><div class="card-title" style="color: var(--rojo); border-color: var(--rojo-claro);">⚠️ Listado de Animales Vencidos o Faltantes</div></div>
             <div style="text-align: center; margin-bottom: 15px;">
@@ -549,6 +577,78 @@
         `).join('');
     }
 
+    // ==============================================
+    // MOTOR DE LECTURA DE EXCEL
+    // ==============================================
+    async function procesarExcelPruebas() {
+        const texto = document.getElementById('excel-paste-area').value.trim();
+        const tipoPrueba = document.getElementById('tipo-prueba-excel').value;
+        const statusDiv = document.getElementById('excel-status');
+        
+        if(!tipoPrueba) {
+            statusDiv.innerHTML = "⚠️ Deténgase: Debe seleccionar el tipo de prueba arriba.";
+            statusDiv.style.color = "var(--tierra)";
+            return;
+        }
+
+        if(!texto) {
+            statusDiv.innerHTML = "⚠️ Por favor, pegue los datos de Excel en el cuadro amarillo.";
+            statusDiv.style.color = "var(--tierra)";
+            return;
+        }
+        
+        const lineas = texto.split('\n');
+        const filas = [];
+        
+        lineas.forEach(linea => {
+            const cols = linea.trim().split(/\t+| {2,}/); 
+            if(cols.length >= 2) {
+                filas.push({ tubo: cols[0].trim(), resultado: cols[1].trim() });
+            }
+        });
+        
+        if(filas.length === 0) {
+            statusDiv.innerHTML = "❌ Formato incorrecto. Pegue dos columnas (Nro Tubo y Resultado).";
+            statusDiv.style.color = "var(--rojo)";
+            return;
+        }
+        
+        statusDiv.innerHTML = `⏳ Cruzando ${filas.length} resultados de ${tipoPrueba} con la base de datos...`;
+        statusDiv.style.color = "var(--azul)";
+        
+        try {
+            const res = await fetch("https://pysiga.d-alexjose.workers.dev", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    accion: "actualizarPruebasExcel", 
+                    email: email, 
+                    filas: filas,
+                    tipoPrueba: tipoPrueba 
+                })
+            });
+            
+            const data = await res.json();
+            if(data.ok) {
+                statusDiv.innerHTML = `✅ ¡Éxito! Se sincronizaron ${data.actualizados} resultados a sus animales correspondientes.`;
+                statusDiv.style.color = "var(--verde)";
+                document.getElementById('excel-paste-area').value = ""; 
+                
+                setTimeout(() => {
+                    statusDiv.innerHTML = "♻️ Recargando gráficos...";
+                    cargarDatos();
+                }, 2000);
+            } else {
+                statusDiv.innerHTML = `❌ Error interno: ${data.error}`;
+                statusDiv.style.color = "var(--rojo)";
+            }
+        } catch (err) {
+            statusDiv.innerHTML = "❌ Fallo de conexión con el servidor.";
+            statusDiv.style.color = "var(--rojo)";
+        }
+    }
+    // ==============================================
+    
     window.onload = cargarDatos;
 </script>
 </body>
